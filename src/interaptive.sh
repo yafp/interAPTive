@@ -110,8 +110,8 @@ function printCommandList {
 	printf "  [9] Remove unneeded packages (apt-get autoremove)\n\n"
 	# misc
 	printf " [10] Show installed packages (apt list --installed)\n"
-	printf " [11] Show installed packages (apt list --upgradable)\n"
-	printf " [12] Show installed packages (apt list --all-versions)\n\n"
+	printf " [11] Show upgradable packages (apt list --upgradable)\n"
+	printf " [12] Show all packages (apt list --all-versions)\n\n"
 	# admin
 	printf "  [E] Edit sources (apt edit-sources)\n\n"
 	# quit
