@@ -13,8 +13,8 @@ interAPTive is an interactive commandline interface for APT
 # Install/Uninstall
 - Unpack the archive
 - navigate to folder which contains this README.md
-- Install by running:
 
+Install by running:
 > sudo make install
 
 Uninstall by running:
