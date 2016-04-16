@@ -8,20 +8,15 @@
 # ------------------------------------------------------
 appName="interAPTive"
 appDescription="An interactive commandline interface for APT"
-version="0.1"
+version="0.2"
 
 tagline="$appName $version - $appDescription"
-
-
 
 
 
 # ---------------------------------------------------------------------
 # ENVIRONMENT & COLOR DEFINITIONS
 # ---------------------------------------------------------------------
-lines=$(tput lines)
-columns=$(tput cols)
-
 # format
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -32,8 +27,6 @@ black=$(tput setaf 0)
 red=$(tput setaf 1)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
-lime_yellow=$(tput setaf 190)
-powder_blue=$(tput setaf 153)
 blue=$(tput setaf 4)
 magenta=$(tput setaf 5)
 cyan=$(tput setaf 6)
@@ -42,12 +35,42 @@ white=$(tput setaf 7)
 
 
 # ------------------------------------------------------
+# CHECK FOR ROOT USAGE
+# ------------------------------------------------------
+function checkForRootUser() {
+	if [ "$EUID" -ne 0 ]; then
+		rootUser=false
+  	else
+		rootUser=true
+	fi
+}
+
+
+
+# ------------------------------------------------------
+# CHECK FOR APT
+# ------------------------------------------------------
+function checkForApt() {
+	if hash apt 2>/dev/null; then # check for apt
+        printf "Detected apt"
+    else
+		printf "${bold}${red}ERROR${normal} - Unable to find apt (errno 1)\n\n"
+        exit 1
+    fi
+}
+
+
+
+# ------------------------------------------------------
 # PRINT HEAD
 # ------------------------------------------------------
 function printHead {
+	lines=$(tput lines)
+	columns=$(tput cols)
 	clear
 
-	printf "\n _)        |               \    _ \ __ __| _)\n"
+	printf "\n"
+	printf " _)        |               \    _ \ __ __| _)\n"
 	printf "  |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
 	printf " _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
 
@@ -62,16 +85,9 @@ function printHead {
 		printf " "
 	done
 	printf "\e[49m" # switch back to default background
-	printf "\e[39m\n\n" #  switch back to Default foreground
+	printf "\e[39m\n\n" #  switch back to default foreground
 
 	# http://misc.flogisoft.com/bash/tip_colors_and_formatting
-	#
-	#printf "\e[42m" # switch to green background
-	#printf "\e[30m" # switch to black foreground
-	#printf "     $appName $version - $appDescription     "
-	#printf "%*s\n" $(((${#tagline}+$columns)/2)) "$tagline"
-	#printf "\e[49m" # switch back to default background
-	#printf "\e[39m\n\n" #  switch back to Default foreground
 }
 
 
@@ -81,19 +97,25 @@ function printHead {
 # ------------------------------------------------------
 function printCommandList {
 	# Updateing
-	printf " [1] Fetch package list (apt update)\n"
-	printf " [2] Download and install updates (apt upgrade)\n"
-	printf " [3] Download and install the updates and install new neessary packages (apt dist-upgrade)\n\n"
+	printf "  [1] Fetch package list (apt update)\n"
+	printf "  [2] Download and install updates (apt upgrade)\n"
+	printf "  [3] Download and install the updates and install new neessary packages (apt dist-upgrade)\n\n"
 	# search & info
-	printf " [4] Search a package (apt search PACKAGENAME)\n"
-	printf " [5] Show package information (apt show PACKAGENAME)\n"
-	printf " [6] Show package version information (apt-cache policy PACKAGENAME)\n\n"
+	printf "  [4] Search a package (apt search PACKAGENAME)\n"
+	printf "  [5] Show package information (apt show PACKAGENAME)\n"
+	printf "  [6] Show package version information (apt-cache policy PACKAGENAME)\n\n"
 	# install or remove
-	printf " [7] Install new package (apt install PACKAGENAME)\n"
-	printf " [8] Remove a package (apt remove PACKAGENAME)\n"
-	printf " [9] Remove unneeded packages (apt-get autoremove)\n\n"
+	printf "  [7] Install new package (apt install PACKAGENAME)\n"
+	printf "  [8] Remove a package (apt remove PACKAGENAME)\n"
+	printf "  [9] Remove unneeded packages (apt-get autoremove)\n\n"
+	# misc
+	printf " [10] Show installed packages (apt list --installed)\n"
+	printf " [11] Show installed packages (apt list --upgradable)\n"
+	printf " [12] Show installed packages (apt list --all-versions)\n\n"
+	# admin
+	printf "  [E] Edit sources (apt edit-sources)\n\n"
 	# quit
-	printf " [Q] Quit\n\n"
+	printf "  [Q] Quit\n\n"
 }
 
 
@@ -101,9 +123,9 @@ function printCommandList {
 # ------------------------------------------------------
 # EXECUTE APT COMMAND
 # ------------------------------------------------------
-function executeAPTCommand(){
+function executeAPTCommand() {
 	# check if user is root or not - if not add sudo before command if needed
-	printf "Executing: $1\n"
+	printf "\nExecuting ${bold}$1${normal}\n\n"
 	$1
 	pause
 }
@@ -113,23 +135,10 @@ function executeAPTCommand(){
 # ------------------------------------------------------
 # PAUSE - WAIT FOR INPUT & RESTART INPUT LOOP
 # ------------------------------------------------------
-function pause(){
+function pause() {
 	printf "\n${green}Press ANY key to return to the main interface ...${normal}"
    	read -p "$*"
    	newInputLoop
-}
-
-
-# ------------------------------------------------------
-# CGHECK FOR ROOT USAGE
-# ------------------------------------------------------
-function checkForRootUser()
-{
-	if [ "$EUID" -ne 0 ]; then
-		rootUser=false
-  	else
-		rootUser=true
-	fi
 }
 
 
@@ -185,7 +194,6 @@ function newInputLoop {
 				executeAPTCommand "apt-cache policy $search"
 				break;;
 
-
 			[7])
 				read -p "${green}Please enter a package name for installation: ${normal}" search
 				if [[ $rootUser==false ]]; then
@@ -212,14 +220,30 @@ function newInputLoop {
 				fi
 				break;;
 
-	   		[qQ]* )
+			10)
+				executeAPTCommand "apt list --installed"
+				break;;
+
+			11)
+				executeAPTCommand "apt list --upgradable"
+				break;;
+
+			11)
+				executeAPTCommand "apt list --all-versions"
+				break;;
+
+			[eE])
+				if [[ $rootUser==false ]]; then
+					executeAPTCommand "sudo apt edit-sources"
+				else
+					executeAPTCommand "apt edit-sources"
+				fi
+				break;;
+
+	   		[qQ])
 				exit;;
-
-	   		#* ) # anything else
-			#	newInputLoop
-	  	esac
+		esac
 	done
-
 }
 
 
@@ -227,5 +251,7 @@ function newInputLoop {
 # ------------------------------------------------------
 # Script Logic
 # ------------------------------------------------------
-checkForRootUser
-newInputLoop # run the input loop at start
+printHead 			# print script head in case of errors in checkForApt
+checkForApt			# check if system has apt
+checkForRootUser	# check if user is root or not
+newInputLoop 		# run the input loop at start
