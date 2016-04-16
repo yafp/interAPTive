@@ -5,3 +5,6 @@
 
 # About
 interAPTive is an interactive commandline interface for APT
+
+
+![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/current_ui.png)
