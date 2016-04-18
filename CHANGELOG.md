@@ -1,8 +1,17 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
-0.2 (20160416)
-==============
+
+0.3 - Some more (20160418)
+==========================
+- Optimize command-list formatting (#7)
+- Add command apt purge (#8)
+- Fix bug in pause function (#9)
+- Add apt history function (#10)
+
+
+0.2 - More more more (20160416)
+===============================
 - Check if apt is available (#1)
 - Terminal width is now recalculated on each header print (#2)
 - Add command apt list (#3)
@@ -10,7 +19,6 @@
 - Adding a changelog (#6)
 
 
-
-0.1 (20160416)
-==============
+0.1 - The initial one (20160416)
+================================
 - Initial version (#5)
