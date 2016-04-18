@@ -20,7 +20,7 @@
 appName="interAPTive"
 appDescription="An interactive commandline interface for APT"
 appURL="https://github.com/yafp/interAPTive/"
-appVersion="0.3 (WIP)"
+appVersion="0.3"
 appTagline=" $appName $appVersion - $appDescription - ($appURL)"
 
 
