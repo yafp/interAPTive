@@ -7,12 +7,14 @@
 interAPTive is an interactive commandline interface for APT
 
 
+# UI
 ![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/current_ui.png)
 
 
 # Install/Uninstall
-- Unpack the archive
-- navigate to folder which contains this README.md
+- Download latest version [here](https://github.com/yafp/interAPTive/archive/master.zip)
+- Extract the archive
+- Navigate to folder which contains this README.md
 
 Install by running:
 > sudo make install
