@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/license-GPL3-brightgreen.svg)](LICENSE)
-[![Download](https://img.shields.io/github/downloads/atom/atom/total.svg)](DOWNLOAD)
+[![Download](https://img.shields.io/github/downloads/interAPTive/interAPTive/total.svg)](DOWNLOAD)
 
 
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive
