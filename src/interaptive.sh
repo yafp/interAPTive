@@ -1,6 +1,17 @@
 #!/bin/bash
 
-# Function: Offering a simple apt-gui inspired by yaourt-gui
+# Title				:interaptive.sh
+# Description		:An interactive commandline interface for APT
+#											(inspired by yaourt-gui)
+# Author			:yafp
+# URL				:https://github.com/yafp/interAPTive/
+# Date            	:20160418
+# Version         	:0.3
+# Usage		 		:bash interaptive.sh 	(non-installed)
+#					:interaptive			(installed via Makefile)
+# Notes				:None
+# Bash_version    	: 4.3.11(1)-release 	(tested with)
+
 
 
 # ------------------------------------------------------
@@ -8,29 +19,22 @@
 # ------------------------------------------------------
 appName="interAPTive"
 appDescription="An interactive commandline interface for APT"
-version="0.2"
-
-tagline="$appName $version - $appDescription"
+appURL="https://github.com/yafp/interAPTive/"
+appVersion="0.3 (WIP)"
+appTagline=" $appName $appVersion - $appDescription - ($appURL)"
 
 
 
 # ---------------------------------------------------------------------
-# ENVIRONMENT & COLOR DEFINITIONS
+# TEXT-STYLES & COLOR DEFINITIONS
 # ---------------------------------------------------------------------
-# format
+# styles
 bold=$(tput bold)
 normal=$(tput sgr0)
 underline=$(tput smul)
 
 # colors
-black=$(tput setaf 0)
-red=$(tput setaf 1)
 green=$(tput setaf 2)
-yellow=$(tput setaf 3)
-blue=$(tput setaf 4)
-magenta=$(tput setaf 5)
-cyan=$(tput setaf 6)
-white=$(tput setaf 7)
 
 
 
@@ -38,9 +42,9 @@ white=$(tput setaf 7)
 # CHECK FOR ROOT USAGE
 # ------------------------------------------------------
 function checkForRootUser() {
-	if [ "$EUID" -ne 0 ]; then
+	if [ "$EUID" -ne 0 ]; then # current user != root
 		rootUser=false
-  	else
+  	else # current user = root
 		rootUser=true
 	fi
 }
@@ -65,29 +69,22 @@ function checkForApt() {
 # PRINT HEAD
 # ------------------------------------------------------
 function printHead {
-	lines=$(tput lines)
+	lines=$(tput lines) # not in use so far
 	columns=$(tput cols)
 	clear
 
-	printf "\n"
-	printf " _)        |               \    _ \ __ __| _)\n"
-	printf "  |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
-	printf " _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
+	printf "\n  _)        |               \    _ \ __ __| _)\n"
+	printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
+	printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
 
-	printf "${bold}"
-	printf "%*s\n" $(((${#tagline}+$columns)/2)) "$tagline"
-	printf "${normal}"
+	printf "${bold}$appTagline\n"
 
-	printf "\e[42m" # switch to green background
-	printf "\e[30m" # switch to black foreground
-	for (( c=1; c<=$columns; c++ ))
+	printf " ${green}"
+	for (( c=1; c<=$columns-2; c++ ))
 	do
-		printf " "
+		printf "-"
 	done
-	printf "\e[49m" # switch back to default background
-	printf "\e[39m\n\n" #  switch back to default foreground
-
-	# http://misc.flogisoft.com/bash/tip_colors_and_formatting
+	printf "${normal}\n\n"
 }
 
 
@@ -96,26 +93,67 @@ function printHead {
 # PRINT COMMAND LIST
 # ------------------------------------------------------
 function printCommandList {
-	# Updateing
-	printf "  [1] Fetch package list (apt update)\n"
-	printf "  [2] Download and install updates (apt upgrade)\n"
-	printf "  [3] Download and install the updates and install new neessary packages (apt dist-upgrade)\n\n"
+	# Update'ing
+	printf " ${bold}Update${normal}\n"
+	printf "  [1] Update package list\t\t\t\t(apt update)\n"
+	printf "  [2] Download and install updates\t\t\t(apt upgrade)\n"
+	printf "  [3] Download and install updates & dependencies\t(apt dist-upgrade)\n\n"
+
 	# search & info
-	printf "  [4] Search a package (apt search PACKAGENAME)\n"
-	printf "  [5] Show package information (apt show PACKAGENAME)\n"
-	printf "  [6] Show package version information (apt-cache policy PACKAGENAME)\n\n"
-	# install or remove
-	printf "  [7] Install new package (apt install PACKAGENAME)\n"
-	printf "  [8] Remove a package (apt remove PACKAGENAME)\n"
-	printf "  [9] Remove unneeded packages (apt-get autoremove)\n\n"
+	printf " ${bold}Info${normal}\n"
+	printf "  [4] Search a package\t\t\t\t\t(apt search PKG-NAME)\n"
+	printf "  [5] Show package information\t\t\t\t(apt show PKG-NAME)\n"
+	printf "  [6] Show package version information\t\t\t(apt-cache policy PKG-NAME)\n"
+	printf "  [7] Show installed packages\t\t\t\t(apt list --installed)\n"
+	printf "  [8] Show upgradable packages\t\t\t\t(apt list --upgradable)\n"
+	printf "  [9] Show all packages\t\t\t\t\t(apt list --all-versions)\n\n"
+
+	# install
+	printf " ${bold}Install${normal}\n"
+	printf " [10] Install new packages by name\t\t\t(apt install PKG-NAME)\n\n"
+
+	# remove
+	printf " ${bold}Removal${normal}\n"
+	printf " [11] Remove packages by name\t\t\t\t(apt remove PKG-NAME)\n"
+	printf " [12] Purge packages by name\t\t\t\t(apt purge PKG-NAME)\n"
+	printf " [13] Remove unneeded packages\t\t\t\t(apt-get autoremove)\n\n"
+
 	# misc
-	printf " [10] Show installed packages (apt list --installed)\n"
-	printf " [11] Show upgradable packages (apt list --upgradable)\n"
-	printf " [12] Show all packages (apt list --all-versions)\n\n"
-	# admin
-	printf "  [E] Edit sources (apt edit-sources)\n\n"
-	# quit
+	printf " ${bold}Misc${normal}\n"
+	printf "  [L] Show apt log\t\t\t\t\t(/var/log/dpkg)\n"
+	printf "  [E] Edit sources\t\t\t\t\t(apt edit-sources)\n"
 	printf "  [Q] Quit\n\n"
+}
+
+
+
+# ------------------------------------------------------
+# APT-LOG -
+# http://linuxcommando.blogspot.de/2008/08/how-to-show-apt-log-history.html
+# Check: https://github.com/blyork/apt-history for better approach
+# ------------------------------------------------------
+function aptLog() {
+	clear
+	read -p " ${green}Choose${normal} [I]nstall, [U]pgrade, [R]emove or [A]ll: " answer
+	# handle the input
+	case $answer in
+		[iI]) # install
+			cat /var/log/dpkg.log | grep 'install '
+			;;
+
+		[uU]) #upgrade
+			cat /var/log/dpkg.log | grep 'upgrade '
+			;;
+
+		[rR]) #remove
+			cat /var/log/dpkg.log | grep 'remove '
+			;;
+
+		[aA]) # all
+			cat /var/log/dpkg.log
+			;;
+	esac
+	pause
 }
 
 
@@ -124,8 +162,7 @@ function printCommandList {
 # EXECUTE APT COMMAND
 # ------------------------------------------------------
 function executeAPTCommand() {
-	# check if user is root or not - if not add sudo before command if needed
-	printf "\nExecuting ${bold}$1${normal}\n\n"
+	printf "\n Executing ${bold}$1${normal}\n\n"
 	$1
 	pause
 }
@@ -136,9 +173,9 @@ function executeAPTCommand() {
 # PAUSE - WAIT FOR INPUT & RESTART INPUT LOOP
 # ------------------------------------------------------
 function pause() {
-	printf "\n${green}Press ANY key to return to the main interface ...${normal}"
-   	read -p "$*"
-   	newInputLoop
+	printf "\n ${green}Press ANY key to return to the main interface ...${normal}"
+	read -n 1
+   	printCoreUI
 }
 
 
@@ -146,13 +183,13 @@ function pause() {
 # ------------------------------------------------------
 # INPUT LOOP
 # ------------------------------------------------------
-function newInputLoop {
+function printCoreUI {
 	while true
 	do
 		printHead			# print head
 		printCommandList	# print command list
 
-		read -p "${green}Please enter a command number: ${normal}" answer
+		read -p " ${green}Please enter a command number: ${normal}" answer
 		# handle the input
 	  	case $answer in
 			[1])
@@ -161,7 +198,7 @@ function newInputLoop {
 				else
 					executeAPTCommand "apt update"
 				fi
-				break;;
+				;;
 
 			[2])
 				if [[ $rootUser==false ]]; then
@@ -169,7 +206,7 @@ function newInputLoop {
 				else
 					executeAPTCommand "apt upgrade"
 				fi
-				break;;
+				;;
 
 			[3])
 				if [[ $rootUser==false ]]; then
@@ -177,60 +214,69 @@ function newInputLoop {
 				else
 					executeAPTCommand "apt dist-upgrade"
 				fi
-				break;;
+				;;
 
 			[4])
-				read -p "${green}Please enter a search string: ${normal}" search
+				read -p " ${green}Searching for: ${normal}" search
 				executeAPTCommand "apt search $search"
-				break;;
+				;;
 
 			[5])
-				read -p "${green}Please enter a package name: ${normal}" search
+				read -p " ${green}Show info for pkg: ${normal}" search
 				executeAPTCommand "apt show $search"
-				break;;
+				;;
 
 			[6])
-				read -p "${green}Please enter a package name: ${normal}" search
+				read -p " ${green}Show policy for pkg: ${normal}" search
 				executeAPTCommand "apt-cache policy $search"
-				break;;
+				;;
 
 			[7])
-				read -p "${green}Please enter a package name for installation: ${normal}" search
+				executeAPTCommand "apt list --installed"
+				;;
+
+			[8])
+				executeAPTCommand "apt list --upgradable"
+				;;
+
+			[9])
+				executeAPTCommand "apt list --all-versions"
+				;;
+
+			10)
+				read -p " ${green}Please enter a package name for installation: ${normal}" search
 				if [[ $rootUser==false ]]; then
 					executeAPTCommand "sudo apt install $search"
 				else
 					executeAPTCommand "apt install $search"
 				fi
-				break;;
+				;;
 
-			[8])
-				read -p "${green}Please enter a package name for removal: ${normal}" search
+			11)
+				read -p " ${green}Please enter a package name for removal: ${normal}" search
 				if [[ $rootUser==false ]]; then
 					executeAPTCommand "sudo apt remove $search"
 				else
 					executeAPTCommand "apt remove $search"
 				fi
-				break;;
+				;;
 
-			[9])
+			12)
+				read -p " ${green}Please enter a package name for purge: ${normal}" search
+				if [[ $rootUser==false ]]; then
+					executeAPTCommand "sudo apt purge $search"
+				else
+					executeAPTCommand "apt purge $search"
+				fi
+				;;
+
+			13)
 				if [[ $rootUser==false ]]; then
 					executeAPTCommand "sudo apt-get autoremove"
 				else
 					executeAPTCommand "apt-get autoremove"
 				fi
-				break;;
-
-			10)
-				executeAPTCommand "apt list --installed"
-				break;;
-
-			11)
-				executeAPTCommand "apt list --upgradable"
-				break;;
-
-			11)
-				executeAPTCommand "apt list --all-versions"
-				break;;
+				;;
 
 			[eE])
 				if [[ $rootUser==false ]]; then
@@ -238,7 +284,11 @@ function newInputLoop {
 				else
 					executeAPTCommand "apt edit-sources"
 				fi
-				break;;
+				;;
+
+			[lL])
+				aptLog
+				;;
 
 	   		[qQ])
 				exit;;
@@ -254,4 +304,4 @@ function newInputLoop {
 printHead 			# print script head in case of errors in checkForApt
 checkForApt			# check if system has apt
 checkForRootUser	# check if user is root or not
-newInputLoop 		# run the input loop at start
+printCoreUI 		# run the input loop at start
