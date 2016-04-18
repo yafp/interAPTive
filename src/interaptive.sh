@@ -34,6 +34,7 @@ normal=$(tput sgr0)
 underline=$(tput smul)
 
 # colors
+red=$(tput setaf 1)
 green=$(tput setaf 2)
 
 
@@ -58,7 +59,9 @@ function checkForApt() {
 	if hash apt 2>/dev/null; then # check for apt
         printf "Detected apt"
     else
-		printf "${bold}${red}ERROR${normal} - Unable to find apt (errno 1)\n\n"
+		printf "${bold}${red}ERROR${normal}\tUnable to find apt (errno 1).\n\n"
+		printf "\tPlease make sure you are working on a debian-based system.\n"
+		printf "\tVisit $appURL to report issues.\n"
         exit 1
     fi
 }
