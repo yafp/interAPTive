@@ -2,6 +2,16 @@
 ==========
 
 
+0.4 - aptsh? (20160419)
+=======================
+- Restructured command-list & related command-numbers
+- Add Clear screen while on exit
+- Add command apt-cache depends (#12)
+- Add command apt-get changelog (#13)
+- Add command apt install --reinstall (#14)
+- Add window-size check (#15)
+
+
 0.3 - Some more (20160418)
 ==========================
 - Optimize command-list formatting (#7)
