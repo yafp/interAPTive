@@ -6,12 +6,11 @@
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
 # Date            	:20160419
-# Version         	:0.4
+# Version         	:0.5
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
 # Bash_version    	: 4.3.11(1)-release 	(tested with)
-
 
 
 # ------------------------------------------------------
@@ -20,9 +19,8 @@
 appName="interAPTive"
 appDescription="An interactive commandline interface for APT"
 appURL="https://github.com/yafp/interAPTive/"
-appVersion="0.4"
-appTagline=" $appName $appVersion - $appDescription - ($appURL)"
-
+appVersion="0.5 (WIP 20160420)" # 0.x (WIP YYMMDDDD) = work in progress
+appTagline=" $appName - $appDescription"
 
 
 # ---------------------------------------------------------------------
@@ -38,7 +36,6 @@ red=$(tput setaf 1)
 green=$(tput setaf 2)
 
 
-
 # ------------------------------------------------------
 # CHECK FOR ROOT USAGE
 # ------------------------------------------------------
@@ -51,12 +48,11 @@ function checkForRootUser() {
 }
 
 
-
 # ------------------------------------------------------
 # CHECK FOR APT
 # ------------------------------------------------------
 function checkForApt() {
-	printf "Searching apt...\n"
+	printf "Searching apt...\n\n"
 	if hash apt 2>/dev/null; then # check for apt
         printf "\tDetected apt\n"
     else
@@ -72,21 +68,28 @@ function checkForApt() {
 # CHECK TERMINAL WINDOW SIZE
 # ------------------------------------------------------
 function checkTerminalSize() {
-	errorCount=0
+	errorCount=0		# Reset errorCounter to 0
+	minLines=41 		# Define min height
+	minColumns=90 		# Define mind weight
+	hideASCIIArt=false
 
-	# check Lines
-	if (( $lines < 40 )); then
-		printf "\tWindow height is to small\n"
-		errorCount=$((errorCount+1))
+	# check Lines/Heigth
+	if (( $lines < $minLines )); then
+		if (( $lines < $minLines-5 )); then
+			printf " Window height ($lines) is to small (min $minLines).\n Please resize your terminal window and ...\n"
+			errorCount=$((errorCount+1)) # Errorcount +1
+		else # hiding ascii-art should be enough to fit to terminal-size ... so lets hide it
+			hideASCIIArt=true
+		fi
 	fi
 
 	# check columns
-	if (( $columns < 110 )); then
-		printf "\tWindow width is to small\n"
-		errorCount=$((errorCount+1))
+	if (( $columns < $minColumns )); then
+		printf " Window width ($columns) is to small (min $minColumns).\n Please resize your terminal window and ...\n"
+		errorCount=$((errorCount+1)) # Errorcount +1
 	fi
 
-	# check if errors happened
+	# check if errors happened - if so pause the script
 	if (( $errorCount > 0 )); then
 		pause
 	fi
@@ -102,9 +105,12 @@ function printHead {
 	lines=$(tput lines)
 	columns=$(tput cols)
 
-	printf "\n  _)        |               \    _ \ __ __| _)\n"
-	printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
-	printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
+	# Show ASCII art only if we have enough space - otherwise skip
+	if [ "$hideASCIIArt" = false ] ; then
+		printf "\n  _)        |               \    _ \ __ __| _)\n"
+		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
+		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
+	fi
 
 	printf "${bold}$appTagline\n"
 
@@ -117,7 +123,6 @@ function printHead {
 
 	checkTerminalSize
 }
-
 
 
 # ------------------------------------------------------
@@ -156,12 +161,9 @@ function printCommandList {
 	printf " ${bold}Misc${normal}\n"
 	printf "  [L] Show apt log\t\t\t\t\t(/var/log/dpkg)\n" # Issue 10
 	printf "  [E] Edit sources\t\t\t\t\t(apt edit-sources)\n" # Issue 4
+	printf "  [H] Help\n" # Issue
 	printf "  [Q] Quit\n\n"
-
-	#printf "Lines = $lines\n"
-	#printf "Columns = $columns\n"
 }
-
 
 
 # ------------------------------------------------------
@@ -170,9 +172,8 @@ function printCommandList {
 # Check: https://github.com/blyork/apt-history for better approach
 # ------------------------------------------------------
 function aptLog() {
-	clear
+	printHead
 	read -p " ${green}Choose${normal} [I]nstall, [U]pgrade, [R]emove or [A]ll: " answer
-	# handle the input
 	case $answer in
 		[iI]) # install
 			cat /var/log/dpkg.log | grep 'install '
@@ -194,7 +195,6 @@ function aptLog() {
 }
 
 
-
 # ------------------------------------------------------
 # EXECUTE APT COMMAND
 # ------------------------------------------------------
@@ -203,7 +203,6 @@ function executeAPTCommand() {
 	$1
 	pause
 }
-
 
 
 # ------------------------------------------------------
@@ -216,7 +215,6 @@ function pause() {
 }
 
 
-
 # ------------------------------------------------------
 # INPUT LOOP
 # ------------------------------------------------------
@@ -227,7 +225,6 @@ function printCoreUI {
 		printCommandList	# print command list
 
 		read -p " ${green}Please enter a command number: ${normal}" answer
-		# handle the input
 	  	case $answer in
 			[1])
 				if [[ $rootUser==false ]]; then
@@ -334,7 +331,7 @@ function printCoreUI {
 				fi
 				;;
 
-			[eE])
+			[eE]) # edit sources
 				if [[ $rootUser==false ]]; then
 					executeAPTCommand "sudo apt edit-sources"
 				else
@@ -342,11 +339,20 @@ function printCoreUI {
 				fi
 				;;
 
-			[lL])
+			[lL]) # apt log
 				aptLog
 				;;
 
-	   		[qQ])
+			[hH]) # help
+				printHead
+				printf " Name:\t\t$appName\n"
+				printf " Function:\t$appDescription\n"
+				printf " Version:\t$appVersion\n"
+				printf " URL:\t\t$appURL\n"
+				pause
+				;;
+
+	   		[qQ]) # quit
 				clear
 				exit;;
 
@@ -357,7 +363,6 @@ function printCoreUI {
 		esac
 	done
 }
-
 
 
 # ------------------------------------------------------

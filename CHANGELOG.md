@@ -1,6 +1,11 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
+0.5 - Sup? (201604xx)
+=====================
+- Optimized window-size check (ASCII-art might get hidden if that helps) (#16)
+- Add Help command (#17)
+
 
 0.4 - aptsh? (20160419)
 =======================
