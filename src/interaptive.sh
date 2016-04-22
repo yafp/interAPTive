@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date            	:20160419
+# Date            	:20160422
 # Version         	:0.5
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -14,30 +14,71 @@
 
 
 # ------------------------------------------------------
-# GENERAL DEFINITIONS
+# Function: sets some readonly variables
 # ------------------------------------------------------
-appName="interAPTive"
-appDescription="An interactive commandline interface for APT"
-appURL="https://github.com/yafp/interAPTive/"
-appVersion="0.5 (WIP 20160420)" # 0.x (WIP YYMMDDDD) = work in progress
-appTagline=" $appName - $appDescription"
+function initAppBasics() {
+	readonly appAuthor="yafp"
+	readonly appName="interAPTive"
+	readonly appDescription="An interactive commandline interface for APT"
+	readonly appVersion="0.5.20160422" # 0.x.YYMMDDDD
+	readonly appTagline=" $appName - $appDescription"
+	readonly appPathFull="/usr/bin/interaptive" # if installed
+	readonly appURL="https://github.com/yafp/interAPTive/"
+	readonly appDownloadURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive.sh"
+	readonly appVersionURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/version"
+	#set -o nounset # Handling for undefined variables
+}
 
 
 # ---------------------------------------------------------------------
-# TEXT-STYLES & COLOR DEFINITIONS
+# Function: 	Defines some text formating styles and colors
 # ---------------------------------------------------------------------
-# styles
-bold=$(tput bold)
-normal=$(tput sgr0)
-underline=$(tput smul)
+function initTextAndColors() {
+	# styles
+	bold=$(tput bold)
+	normal=$(tput sgr0)
+	underline=$(tput smul)
 
-# colors
-red=$(tput setaf 1)
-green=$(tput setaf 2)
+	# colors
+	red=$(tput setaf 1)
+	green=$(tput setaf 2)
+}
 
 
 # ------------------------------------------------------
-# CHECK FOR ROOT USAGE
+# Function:		Checks if APT can be found on that host or not
+#				Used on script start to check if it makes sense on that system or not
+# ------------------------------------------------------
+function checkForApt() {
+	printf " Searching apt\t\t\t"
+	if hash apt 2>/dev/null; then # check for apt
+        printf "${bold}${green}PASSED${normal}\n"
+    else
+		printf "${bold}${red}FAILED${normal}\n"
+		printError "1" "Unable to find apt ... aborting"
+        exit 1
+    fi
+}
+
+
+# ------------------------------------------------------
+# Function:		Checks if CURL can be found on that host or not
+#				Used on selfupdate
+# ------------------------------------------------------
+function checkForCURL() {
+	printf " Searching curl\t\t\t"
+	if hash curl 2>/dev/null; then # check for curl
+		printf "${bold}${green}PASSED${normal}\n"
+    else
+		printf "${bold}${red}FAILED${normal}\n"
+		printError "3" "Unable to find curl ... aborting"
+    fi
+}
+
+
+# ------------------------------------------------------
+# Function: 	Checks if the executing user is root or not
+#				Needed to decide if sudo is needed or not
 # ------------------------------------------------------
 function checkForRootUser() {
 	if [ "$EUID" -ne 0 ]; then # current user != root
@@ -49,127 +90,10 @@ function checkForRootUser() {
 
 
 # ------------------------------------------------------
-# CHECK FOR APT
-# ------------------------------------------------------
-function checkForApt() {
-	printf "Searching apt...\n\n"
-	if hash apt 2>/dev/null; then # check for apt
-        printf "\tDetected apt\n"
-    else
-		printf "${bold}${red}ERROR${normal}\tUnable to find apt (errno 1).\n\n"
-		printf "\tPlease make sure you are working on a debian-based system.\n"
-		printf "\tVisit $appURL to report issues.\n"
-        exit 1
-    fi
-}
-
-
-# ------------------------------------------------------
-# CHECK TERMINAL WINDOW SIZE
-# ------------------------------------------------------
-function checkTerminalSize() {
-	errorCount=0		# Reset errorCounter to 0
-	minLines=41 		# Define min height
-	minColumns=90 		# Define mind weight
-	hideASCIIArt=false
-
-	# check Lines/Heigth
-	if (( $lines < $minLines )); then
-		if (( $lines < $minLines-5 )); then
-			printf " Window height ($lines) is to small (min $minLines).\n Please resize your terminal window and ...\n"
-			errorCount=$((errorCount+1)) # Errorcount +1
-		else # hiding ascii-art should be enough to fit to terminal-size ... so lets hide it
-			hideASCIIArt=true
-		fi
-	fi
-
-	# check columns
-	if (( $columns < $minColumns )); then
-		printf " Window width ($columns) is to small (min $minColumns).\n Please resize your terminal window and ...\n"
-		errorCount=$((errorCount+1)) # Errorcount +1
-	fi
-
-	# check if errors happened - if so pause the script
-	if (( $errorCount > 0 )); then
-		pause
-	fi
-}
-
-
-# ------------------------------------------------------
-# PRINT HEAD
-# ------------------------------------------------------
-function printHead {
-	clear
-
-	lines=$(tput lines)
-	columns=$(tput cols)
-
-	# Show ASCII art only if we have enough space - otherwise skip
-	if [ "$hideASCIIArt" = false ] ; then
-		printf "\n  _)        |               \    _ \ __ __| _)\n"
-		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
-		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
-	fi
-
-	printf "${bold}$appTagline\n"
-
-	printf " ${green}"
-	for (( c=1; c<=$columns-2; c++ ))
-	do
-		printf "-"
-	done
-	printf "${normal}\n\n"
-
-	checkTerminalSize
-}
-
-
-# ------------------------------------------------------
-# PRINT COMMAND LIST
-# ------------------------------------------------------
-function printCommandList {
-	# 1x = Update'ing
-	printf " ${bold}Update${normal}\n"
-	printf "  [1] Update package list\t\t\t\t(apt update)\n"
-	printf "  [2] Download and install updates\t\t\t(apt upgrade)\n"
-	printf "  [3] Download and install updates & dependencies\t(apt dist-upgrade)\n\n"
-
-	# 2x = search & info
-	printf " ${bold}Info${normal}\n"
-	printf " [21] Search packages by name\t\t\t\t(apt search PKG-NAME)\n"
-	printf " [22] Package information\t\t\t\t(apt show PKG-NAME)\n"
-	printf " [23] Package version information\t\t\t(apt-cache policy PKG-NAME)\n"
-	printf " [24] Changelog for single package\t\t\t(apt-get changelog PKG-NAME)\n" # Issue 13
-	printf " [25] Dependencies for single package\t\t\t(apt-cache depends PKG-NAME)\n" # Issue 12
-	printf " [26] List installed packages\t\t\t\t(apt list --installed)\n" # Issue 3
-	printf " [27] List upgradable packages\t\t\t\t(apt list --upgradable)\n" # Issue 3
-	printf " [28] List all packages\t\t\t\t\t(apt list --all-versions)\n\n" # Issue 3
-
-	# 3x = install
-	printf " ${bold}Install${normal}\n"
-	printf " [31] Install new packages by name\t\t\t(apt install PKG-NAME)\n"
-	printf " [32] Reinstall a packages by name\t\t\t(apt install --reinstall PKG-NAME)\n\n" # Issue 14
-
-	# 4x = remove
-	printf " ${bold}Removal${normal}\n"
-	printf " [41] Remove packages by name\t\t\t\t(apt remove PKG-NAME)\n"
-	printf " [42] Purge packages by name\t\t\t\t(apt purge PKG-NAME)\n" # Issue 8
-	printf " [43] Remove unneeded packages\t\t\t\t(apt-get autoremove)\n\n"
-
-	# misc
-	printf " ${bold}Misc${normal}\n"
-	printf "  [L] Show apt log\t\t\t\t\t(/var/log/dpkg)\n" # Issue 10
-	printf "  [E] Edit sources\t\t\t\t\t(apt edit-sources)\n" # Issue 4
-	printf "  [H] Help\n" # Issue
-	printf "  [Q] Quit\n\n"
-}
-
-
-# ------------------------------------------------------
-# APT-LOG -
-# http://linuxcommando.blogspot.de/2008/08/how-to-show-apt-log-history.html
-# Check: https://github.com/blyork/apt-history for better approach
+# Function: 	Searches the dpkg log for some specific keywords
+#				Shows the result
+# Source:		http://linuxcommando.blogspot.de/2008/08/how-to-show-apt-log-history.html
+# Check: 		https://github.com/blyork/apt-history for better approach
 # ------------------------------------------------------
 function aptLog() {
 	printHead
@@ -196,27 +120,225 @@ function aptLog() {
 
 
 # ------------------------------------------------------
-# EXECUTE APT COMMAND
+# Function:		Executes the command in $1 (after user selected an existing  command number)
+#				$1 = command to execute
+#				$2 = if $2 is set, it means the commands needs sudo permissions for normal users
 # ------------------------------------------------------
 function executeAPTCommand() {
-	printf "\n Executing ${bold}$1${normal}\n\n"
-	$1
+	if [[ $rootUser == false ]]; then # not a root user - check if command needs sudo permissions or not
+
+		# executing as non-root user - lets check if the commands needs sudo permissions or not
+		if [[ -z $2  ]]; then # sudo is NOT needed
+			printf "\n1 Executing command ${bold}$1${normal}\n\n"
+			$1
+		else # sudo is needed
+			printf "\n2 Executing command ${bold}$2 $1${normal}\n\n"
+			sudo $1
+		fi
+	else # root user
+		printf "\n3 Executing command ${bold}$1${normal}\n\n"
+		$1
+	fi
 	pause
+
+	unset $1
+	unset $2
 }
 
 
 # ------------------------------------------------------
-# PAUSE - WAIT FOR INPUT & RESTART INPUT LOOP
+# Function:	Pauses the script logic and waits for user interaction
 # ------------------------------------------------------
 function pause() {
-	printf "\n ${green}Press ANY key to continue ...${normal}"
+	printf "\n ${green}Press ANY key to continue${normal}"
 	read -n 1
    	printCoreUI
 }
 
 
 # ------------------------------------------------------
-# INPUT LOOP
+# Function:	Outputs a human readable error
+# ------------------------------------------------------
+function printError() {
+	printf "\n ${bold}${red}ERROR${normal}\t$1\n"
+	printf "\t$2\n"
+	printf "\tVisit $appURL to report issues.\n"
+}
+
+
+# ------------------------------------------------------
+# Function:	Owerwrites itself with the latest version available online
+# ------------------------------------------------------
+function selfUpdate() {
+	printHead
+	checkForCURL
+
+	# download version file to compare local vs online version
+	printf " Checking for updates...\n"
+	curl -o /tmp/interaptive_version $appVersionURL
+
+	appVersionLatest=`cat /tmp/interaptive_version`
+
+	if [[ "$appVersionLatest" == "Not Found" ]]; then
+		#printf "\n Unable to fetch version informations online ... aborting\n"
+		printError "2" "Unable to fetch version informations online ... aborting"
+	else # was able to fetch the version file online via curl
+		printf "\nInstalled:\t$appVersion\n"
+		printf "Latest:\t$appVersionLatest\n\n"
+
+		if [[ $appVersionLatest > $appVersion ]]; then
+			printf " Found newer version\n"
+
+			# check if script was installed on expected location
+			if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
+		        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
+
+				read -p " ${green}Do you really want to update ${bold}$appName${normal}${green}? [Y]es or ANY other key to cancel: ${normal}" answer
+			  	case $answer in
+					[yY])
+						# get latest version
+						curl -o /tmp/interaptive.sh $appDownloadURL
+						printf " Finished downloading latest version of ${bold}$appName${normal}\n"
+
+						if [[ $rootUser==false ]]; then
+							sudo cp /tmp/interaptive.sh $appPathFull
+						else
+							cp /tmp/interaptive.sh $appPathFull
+						fi
+						printf " Finished replacing ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n"
+						printf " You need to restart ${bold}$appName${normal} now to finish the update\n"
+						printf "\n ${green}Press ANY key to quit ${bold}$appName${normal}"
+						read -n 1
+						clear
+						printf " ByeBye\n\n"
+						exit
+						;;
+				esac
+		    else
+				printf " ${bold}${red}ERROR${normal} Unable to find installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal} (errno 1).\n\n"
+				printf " Visit ${bold}$appURL${normal} to report issues.\n"
+		        exit 1
+		    fi
+		else
+			printf "You are already using the latest version\n"
+		fi
+	fi
+	pause
+}
+
+
+# ------------------------------------------------------
+# Function:		Detects size of terminal window & displays warnings if to small
+# 				Prints a header including appname & description
+# ------------------------------------------------------
+function printHead {
+	errorCount=0			# Reset errorCounter to 0
+
+	minLines=42 			# Define min height (-5 without ASCII-art)
+	curLines=$(tput lines)	# get lines of current terminal window
+	errorLinesHeight=""
+
+	minColumns=74 			# Define mind width
+	curColumns=$(tput cols)	# get columns of current terminal window
+	errorColumnsWidth=""
+
+	hideASCIIArt=false		# Set a default value for boolean
+	clear
+
+	# check Lines (Heigth)
+	#
+	if (( $curLines < $minLines )); then
+		if (( $curLines < $minLines-5 )); then
+			errorLinesHeight=" Window height ($curLines) is to small (min $minLines)\n"
+			errorCount=$((errorCount+1)) # Errorcount +1
+		else # hiding ascii-art should be enough to fit to terminal-size ... so lets hide it
+			hideASCIIArt=true
+		fi
+	fi
+
+	# check columns (width)
+	#
+	if (( $curColumns < $minColumns )); then
+		errorColumnsWidth=" Window width ($curColumns) is to small (min $minColumns)\n"
+		errorCount=$((errorCount+1)) # Errorcount +1
+	fi
+
+
+	# Show ASCII art only if we have enough space - otherwise skip
+	#
+	if [ "$hideASCIIArt" = false ] ; then
+		printf "\n  _)        |               \    _ \ __ __| _)\n"
+		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
+		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
+	fi
+
+	printf "${bold}$appTagline\n"
+
+	# print a green line under the header
+	printf " ${green}"
+	for (( c=1; c<=$curColumns-2; c++ ))
+	do
+		printf "-"
+	done
+	printf "${normal}\n\n"
+
+	# check if errors happened - if so pause the script
+	if (( $errorCount > 0 )); then
+		printf "$errorLinesHeight"
+		printf "$errorColumnsWidth"
+		printf "\n Please resize your terminal window and ...\n\n"
+		pause
+	fi
+}
+
+
+# ------------------------------------------------------
+# Function:		Prints a command listing (all functions)
+# ------------------------------------------------------
+function printCommandList {
+	# 1x = Update'ing
+	printf " ${bold}Update${normal}\n"
+	printf "  [1] Update package list\t\t\t(apt update)\n"
+	printf "  [2] Download and install updates\t\t(apt upgrade)\n"
+	printf "  [3] Download and install updates & deps.\t(apt dist-upgrade)\n\n"
+
+	# 2x = search & info
+	printf " ${bold}Info${normal}\n"
+	printf " [21] Search packages by name\t\t\t(apt search)\n"
+	printf " [22] Package information\t\t\t(apt show)\n"
+	printf " [23] Package version information\t\t(apt-cache policy)\n"
+	printf " [24] Changelog for single package\t\t(apt-get changelog)\n" # Issue 13
+	printf " [25] Dependencies for single package\t\t(apt-cache depends)\n" # Issue 12
+	printf " [26] List installed packages\t\t\t(apt list --installed)\n" # Issue 3
+	printf " [27] List upgradable packages\t\t\t(apt list --upgradable)\n" # Issue 3
+	printf " [28] List all packages\t\t\t\t(apt list --all-versions)\n\n" # Issue 3
+
+	# 3x = install
+	printf " ${bold}Install${normal}\n"
+	printf " [31] Install new packages by name\t\t(apt install)\n"
+	printf " [32] Reinstall a packages by name\t\t(apt install --reinstall)\n\n" # Issue 14
+
+	# 4x = remove
+	printf " ${bold}Removal${normal}\n"
+	printf " [41] Remove packages by name\t\t\t(apt remove)\n"
+	printf " [42] Purge packages by name\t\t\t(apt purge)\n" # Issue 8
+	printf " [43] Remove unneeded packages\t\t\t(apt-get autoremove)\n\n"
+
+	# misc
+	printf " ${bold}Misc${normal}\n"
+	printf "  [L] Show apt log\t\t\t\t(/var/log/dpkg)\n" # Issue 10
+	printf "  [E] Edit sources\t\t\t\t(apt edit-sources)\n" # Issue 4
+	printf "  [I] Info\n" # Issue 17
+	printf "  [S] Selfupdate\n" # Issue 18
+	printf "  [Q] Quit\n\n"
+}
+
+
+# ------------------------------------------------------
+# Function: Print head
+#			Print Command list
+#			Wait for user input
+#			Defines the inidividual commands for each command-entry
 # ------------------------------------------------------
 function printCoreUI {
 	while true
@@ -226,140 +348,104 @@ function printCoreUI {
 
 		read -p " ${green}Please enter a command number: ${normal}" answer
 	  	case $answer in
-			[1])
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt update"
-				else
-					executeAPTCommand "apt update"
-				fi
+			[1]) # update
+				executeAPTCommand "apt update" "sudo"
 				;;
 
-			[2])
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt upgrade"
-				else
-					executeAPTCommand "apt upgrade"
-				fi
+			[2]) # upgrade
+				executeAPTCommand "apt upgrade" "sudo"
 				;;
 
-			[3])
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt dist-upgrade"
-				else
-					executeAPTCommand "apt dist-upgrade"
-				fi
+			[3]) # dist-upgrade
+				executeAPTCommand "apt dist-upgrade" "sudo"
 				;;
 
-			21)
+			21) # search
 				read -p " ${green}Searching for: ${normal}" search
 				executeAPTCommand "apt search $search"
 				;;
 
-			22)
+			22) # show
 				read -p " ${green}Show info for pkg: ${normal}" search
 				executeAPTCommand "apt show $search"
 				;;
 
-			23)
+			23) # policy
 				read -p " ${green}Show policy for pkg: ${normal}" search
 				executeAPTCommand "apt-cache policy $search"
 				;;
 
-			24) # Introduced by Issue: #13
+			24) # changelog
 				read -p " ${green}Please enter a package name for changelog: ${normal}" search
 				executeAPTCommand "apt-get changelog $search"
 				;;
 
-			25) # Introduced by Issue: #12
+			25) # depends
 				read -p " ${green}Please enter a package name for dependencies: ${normal}" search
 				executeAPTCommand "apt-cache depends $search"
 				;;
 
-			26)
+			26) # list --installed
 				executeAPTCommand "apt list --installed"
 				;;
 
-			27)
+			27) # list --upgradable
 				executeAPTCommand "apt list --upgradable"
 				;;
 
-			28)
+			28) # list --all-versions
 				executeAPTCommand "apt list --all-versions"
 				;;
 
-			31)
+			31) # install
 				read -p " ${green}Please enter a package name for installation: ${normal}" search
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt install $search"
-				else
-					executeAPTCommand "apt install $search"
-				fi
+				executeAPTCommand "apt install $search" "sudo"
 				;;
 
-			32)
+			32) # reinstall
 				read -p " ${green}Please enter a package name for re-installation: ${normal}" search
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt install --reinstall $search"
-				else
-					executeAPTCommand "apt install --reinstall $search"
-				fi
+				executeAPTCommand "apt install --reinstall $search" "sudo"
 				;;
 
-			41)
+			41) # remove
 				read -p " ${green}Please enter a package name for removal: ${normal}" search
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt remove $search"
-				else
-					executeAPTCommand "apt remove $search"
-				fi
+				executeAPTCommand "apt remove $search" "sudo"
 				;;
 
-			42)
+			42) # purge
 				read -p " ${green}Please enter a package name for purge: ${normal}" search
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt purge $search"
-				else
-					executeAPTCommand "apt purge $search"
-				fi
+				executeAPTCommand "apt purge $search" "sudo"
 				;;
 
-			43)
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt-get autoremove"
-				else
-					executeAPTCommand "apt-get autoremove"
-				fi
+			43) # autoremove
+				executeAPTCommand "apt-get autoremove" "sudo"
 				;;
 
 			[eE]) # edit sources
-				if [[ $rootUser==false ]]; then
-					executeAPTCommand "sudo apt edit-sources"
-				else
-					executeAPTCommand "apt edit-sources"
-				fi
+				executeAPTCommand "apt edit-sources" "sudo"
 				;;
 
 			[lL]) # apt log
 				aptLog
 				;;
 
-			[hH]) # help
+			[iI]) # help / info
 				printHead
-				printf " Name:\t\t$appName\n"
-				printf " Function:\t$appDescription\n"
-				printf " Version:\t$appVersion\n"
-				printf " URL:\t\t$appURL\n"
+				printf " ${bold}Name:${normal}\t\t$appName\n"
+				printf " ${bold}About:${normal}\t\t$appDescription\n"
+				printf " ${bold}Version:${normal}\t$appVersion\n"
+				printf " ${bold}URL:${normal}\t\t$appURL\n\n"
+				printf " ${bold}Developer:${normal}\t$appAuthor\n\n"
 				pause
+				;;
+
+			[sS]) # selfupdate
+				selfUpdate
 				;;
 
 	   		[qQ]) # quit
 				clear
 				exit;;
-
-			*)
-				#printf " ${bold}${red}ERROR${normal}\tInvalid input.\n"
-				#pause
-				;;
 		esac
 	done
 }
@@ -368,7 +454,10 @@ function printCoreUI {
 # ------------------------------------------------------
 # Script Logic
 # ------------------------------------------------------
+initTextAndColors	# Loads the text & color definitions
+initAppBasics		# Loads the app-specific readonly variables
+
 printHead 			# print script head in case of errors in checkForApt
 checkForApt			# check if system has apt
 checkForRootUser	# check if user is root or not
-printCoreUI 		# run the input loop at start
+printCoreUI 		# run the main loop and wait for user input
