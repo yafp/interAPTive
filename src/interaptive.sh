@@ -5,12 +5,20 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date            	:20160422
-# Version         	:0.5
+# Date				:20160425
+# Version			:0.5
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
 # Bash_version    	: 4.3.11(1)-release 	(tested with)
+
+
+# ------------------------------------------------------
+# Developer/Debug Notes
+# ------------------------------------------------------
+# Code stepping:
+#	Enable code stepping by placing the following cmd at the place you want to start debugging
+# 		trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
 
 
 # ------------------------------------------------------
@@ -20,9 +28,10 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.5.20160422" # 0.x.YYMMDDDD
+	readonly appVersion="0.5.20160425.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
-	readonly appPathFull="/usr/bin/interaptive" # if installed
+	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
+	readonly appLicense="GPL3"
 	readonly appURL="https://github.com/yafp/interAPTive/"
 	readonly appDownloadURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive.sh"
 	readonly appVersionURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/version"
@@ -129,14 +138,14 @@ function executeAPTCommand() {
 
 		# executing as non-root user - lets check if the commands needs sudo permissions or not
 		if [[ -z $2  ]]; then # sudo is NOT needed
-			printf "\n1 Executing command ${bold}$1${normal}\n\n"
+			printf "\n Executing command ${bold}$1${normal}\n\n"
 			$1
 		else # sudo is needed
-			printf "\n2 Executing command ${bold}$2 $1${normal}\n\n"
+			printf "\n Executing command ${bold}$2 $1${normal}\n\n"
 			sudo $1
 		fi
 	else # root user
-		printf "\n3 Executing command ${bold}$1${normal}\n\n"
+		printf "\n Executing command ${bold}$1${normal}\n\n"
 		$1
 	fi
 	pause
@@ -183,8 +192,8 @@ function selfUpdate() {
 		#printf "\n Unable to fetch version informations online ... aborting\n"
 		printError "2" "Unable to fetch version informations online ... aborting"
 	else # was able to fetch the version file online via curl
-		printf "\nInstalled:\t$appVersion\n"
-		printf "Latest:\t$appVersionLatest\n\n"
+		printf "\n Installed:\t\t\t$appVersion\n"
+		printf " Latest:\t\t\t$appVersionLatest\n\n"
 
 		if [[ $appVersionLatest > $appVersion ]]; then
 			printf " Found newer version\n"
@@ -193,7 +202,8 @@ function selfUpdate() {
 			if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
 		        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
 
-				read -p " ${green}Do you really want to update ${bold}$appName${normal}${green}? [Y]es or ANY other key to cancel: ${normal}" answer
+				# Ask if user wants to upgrade
+				read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [Y]es or ANY other key to cancel: ${normal}" answer
 			  	case $answer in
 					[yY])
 						# get latest version
@@ -220,7 +230,7 @@ function selfUpdate() {
 		        exit 1
 		    fi
 		else
-			printf "You are already using the latest version\n"
+			printf " You are already using the latest version\n"
 		fi
 	fi
 	pause
@@ -232,21 +242,22 @@ function selfUpdate() {
 # 				Prints a header including appname & description
 # ------------------------------------------------------
 function printHead {
-	errorCount=0			# Reset errorCounter to 0
+	errorCount=0			# Init errorCounter to 0
+	hideASCIIArt=false		# Set a default value for boolean (assuming window is big enough)
 
-	minLines=42 			# Define min height (-5 without ASCII-art)
+	# Height
+	minLines=39 			# Define min height (-5 without ASCII-art)
 	curLines=$(tput lines)	# get lines of current terminal window
 	errorLinesHeight=""
 
-	minColumns=74 			# Define mind width
+	# Width
+	minColumns=74 			# Define mid width
 	curColumns=$(tput cols)	# get columns of current terminal window
 	errorColumnsWidth=""
 
-	hideASCIIArt=false		# Set a default value for boolean
 	clear
 
 	# check Lines (Heigth)
-	#
 	if (( $curLines < $minLines )); then
 		if (( $curLines < $minLines-5 )); then
 			errorLinesHeight=" Window height ($curLines) is to small (min $minLines)\n"
@@ -257,15 +268,12 @@ function printHead {
 	fi
 
 	# check columns (width)
-	#
 	if (( $curColumns < $minColumns )); then
 		errorColumnsWidth=" Window width ($curColumns) is to small (min $minColumns)\n"
 		errorCount=$((errorCount+1)) # Errorcount +1
 	fi
 
-
 	# Show ASCII art only if we have enough space - otherwise skip
-	#
 	if [ "$hideASCIIArt" = false ] ; then
 		printf "\n  _)        |               \    _ \ __ __| _)\n"
 		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
@@ -309,9 +317,7 @@ function printCommandList {
 	printf " [23] Package version information\t\t(apt-cache policy)\n"
 	printf " [24] Changelog for single package\t\t(apt-get changelog)\n" # Issue 13
 	printf " [25] Dependencies for single package\t\t(apt-cache depends)\n" # Issue 12
-	printf " [26] List installed packages\t\t\t(apt list --installed)\n" # Issue 3
-	printf " [27] List upgradable packages\t\t\t(apt list --upgradable)\n" # Issue 3
-	printf " [28] List all packages\t\t\t\t(apt list --all-versions)\n\n" # Issue 3
+	printf " [26] List packages\t\t\t\t(apt list)\n\n" # Issue 3
 
 	# 3x = install
 	printf " ${bold}Install${normal}\n"
@@ -326,8 +332,8 @@ function printCommandList {
 
 	# misc
 	printf " ${bold}Misc${normal}\n"
-	printf "  [L] Show apt log\t\t\t\t(/var/log/dpkg)\n" # Issue 10
 	printf "  [E] Edit sources\t\t\t\t(apt edit-sources)\n" # Issue 4
+	printf "  [L] Show log\t\t\t\t\t(/var/log/dpkg)\n" # Issue 10
 	printf "  [I] Info\n" # Issue 17
 	printf "  [S] Selfupdate\n" # Issue 18
 	printf "  [Q] Quit\n\n"
@@ -385,16 +391,21 @@ function printCoreUI {
 				executeAPTCommand "apt-cache depends $search"
 				;;
 
-			26) # list --installed
-				executeAPTCommand "apt list --installed"
-				;;
+			26) # list
+				read -p " ${green}List all [I]nstalled, [U]pgradable or [A]ll versions: ${normal}" listOption
+				case $listOption in
+					[iI]) # list --installed
+						executeAPTCommand "apt list --installed"
+						;;
 
-			27) # list --upgradable
-				executeAPTCommand "apt list --upgradable"
-				;;
+					[uU]) # list --upgradable
+						executeAPTCommand "apt list --upgradable"
+						;;
 
-			28) # list --all-versions
-				executeAPTCommand "apt list --all-versions"
+					[aA]) # list --all-versions
+						executeAPTCommand "apt list --all-versions"
+						;;
+				esac
 				;;
 
 			31) # install
@@ -435,7 +446,8 @@ function printCoreUI {
 				printf " ${bold}About:${normal}\t\t$appDescription\n"
 				printf " ${bold}Version:${normal}\t$appVersion\n"
 				printf " ${bold}URL:${normal}\t\t$appURL\n\n"
-				printf " ${bold}Developer:${normal}\t$appAuthor\n\n"
+				printf " ${bold}Developer:${normal}\t$appAuthor\n"
+				printf " ${bold}License:${normal}\t$appLicense\n"
 				pause
 				;;
 

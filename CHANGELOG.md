@@ -6,6 +6,7 @@
 - Optimized window-size check (ASCII-art might get hidden if that helps) (#16)
 - Add Help command (#17)
 - Add selfupdate function (#18)
+- Migrate apt list command (#19)
 
 
 0.4 - aptsh? (20160419)
