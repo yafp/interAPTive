@@ -5,10 +5,10 @@
 ==========
 
 # About
-**interAPTive** is an interactive commandline interface for APT (Advanced Packaging Tool on Debian-based Linux distributions).
+**interAPTive** is an interactive commandline interface for **APT** (**A**dvanced **P**ackaging **T**ool on Debian-based Linux distributions).
 
 
-# Screenshots
+# Userinterface (UI)
 ![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/current_ui.png)
 
 
@@ -17,19 +17,19 @@
 * apt-get
 * apt-cache
 
-**interAPTive** is focused on **APT**.
-APT-GET and APT-CACHE are only used where needed.
+**interAPTive** is focused on **apt**.
+apt-get and apt-cache are only used where needed.
 
 
 # Features
-The following commands are supported to far.
+The following commands are supported
 
-**Update**
+## Update
 - apt update
 - apt upgrade
 - apt dist-upgrade
 
-**Info**
+## Info
 - apt search
 - apt show
 - apt-cache policy
@@ -39,16 +39,16 @@ The following commands are supported to far.
 - apt list --upgradable
 - apt list --all-versions
 
-**Install**
+## Install
 - apt install
 - apt install --reinstall
 
-**Removal**
+## Removal
 - apt remove
 - apt purge
 - apt-get autoremove
 
-**Misc**
+## Misc
 - apt edit-sources
 
 

@@ -5,8 +5,8 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160425
-# Version			:0.5
+# Date				:20160428
+# Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
@@ -28,7 +28,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.5.20160425.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160428.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -167,6 +167,8 @@ function pause() {
 
 # ------------------------------------------------------
 # Function:	Outputs a human readable error
+# $1 = errorcode
+# $2 = error-string
 # ------------------------------------------------------
 function printError() {
 	printf "\n ${bold}${red}ERROR${normal}\t$1\n"
@@ -229,8 +231,12 @@ function selfUpdate() {
 				printf " Visit ${bold}$appURL${normal} to report issues.\n"
 		        exit 1
 		    fi
-		else
-			printf " You are already using the latest version\n"
+		else # there are no updates available because:
+			if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
+				printf " You are using a development version\n"
+			else # user is using latest official version
+				printf " You are already using the latest version\n"
+			fi
 		fi
 	fi
 	pause
@@ -243,10 +249,10 @@ function selfUpdate() {
 # ------------------------------------------------------
 function printHead {
 	errorCount=0			# Init errorCounter to 0
-	hideASCIIArt=false		# Set a default value for boolean (assuming window is big enough)
+	showASCIIArt=false		# Set a default value for boolean (assuming window is big enough)
 
 	# Height
-	minLines=39 			# Define min height (-5 without ASCII-art)
+	minLines=34 			# Define min height (+5 for full ASCII-art)
 	curLines=$(tput lines)	# get lines of current terminal window
 	errorLinesHeight=""
 
@@ -257,24 +263,25 @@ function printHead {
 
 	clear
 
-	# check Lines (Heigth)
-	if (( $curLines < $minLines )); then
-		if (( $curLines < $minLines-5 )); then
-			errorLinesHeight=" Window height ($curLines) is to small (min $minLines)\n"
-			errorCount=$((errorCount+1)) # Errorcount +1
-		else # hiding ascii-art should be enough to fit to terminal-size ... so lets hide it
-			hideASCIIArt=true
+	if (( $curLines < $minLines )); then # not enough height
+		#errorLinesHeight=" Window height ($curLines) is to small (min $minLines)\n"
+		errorLinesHeight=" ${bold}${red}ERROR${normal}\tWindow height ($curLines) is to small (min $minLines)\n"
+		errorCount=$((errorCount+1)) # Errorcount +1
+	else # enough height available
+		if (( $curLines > $minLines+4 )); then # check if its enough height for ASCII-art as well
+			showASCIIArt=true
 		fi
 	fi
 
 	# check columns (width)
 	if (( $curColumns < $minColumns )); then
-		errorColumnsWidth=" Window width ($curColumns) is to small (min $minColumns)\n"
+		#errorColumnsWidth=" Window width ($curColumns) is to small (min $minColumns)\n"
+		errorColumnsWidth=" ${bold}${red}ERROR${normal}\tWindow width ($curColumns) is to small (min $minColumns)\n"
 		errorCount=$((errorCount+1)) # Errorcount +1
 	fi
 
 	# Show ASCII art only if we have enough space - otherwise skip
-	if [ "$hideASCIIArt" = false ] ; then
+	if [ "$showASCIIArt" = true ] ; then
 		printf "\n  _)        |               \    _ \ __ __| _)\n"
 		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
 		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"

@@ -1,7 +1,12 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
-0.5 - sup? (201604xx)
+0.6 - Rust (201604xx)
+=====================
+- Change min window height handling (#20)
+
+
+0.5 - sup? (20160425)
 =====================
 - Optimized window-size check (ASCII-art might get hidden if that helps) (#16)
 - Add Help command (#17)
