@@ -4,6 +4,7 @@
 0.6 - Rust (201604xx)
 =====================
 - Change min window height handling (#20)
+- Add apt full-upgrade command (#22)
 
 
 0.5 - sup? (20160425)

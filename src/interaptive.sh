@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160428
+# Date				:20160429
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -28,7 +28,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160428.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160429.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -99,8 +99,7 @@ function checkForRootUser() {
 
 
 # ------------------------------------------------------
-# Function: 	Searches the dpkg log for some specific keywords
-#				Shows the result
+# Function: 	Searches the dpkg log for some specific keywords & Shows the result
 # Source:		http://linuxcommando.blogspot.de/2008/08/how-to-show-apt-log-history.html
 # Check: 		https://github.com/blyork/apt-history for better approach
 # ------------------------------------------------------
@@ -138,14 +137,14 @@ function executeAPTCommand() {
 
 		# executing as non-root user - lets check if the commands needs sudo permissions or not
 		if [[ -z $2  ]]; then # sudo is NOT needed
-			printf "\n Executing command ${bold}$1${normal}\n\n"
+			printf " Executing command ${bold}$1${normal}\n"
 			$1
 		else # sudo is needed
-			printf "\n Executing command ${bold}$2 $1${normal}\n\n"
+			printf " Executing command ${bold}$2 $1${normal}\n"
 			sudo $1
 		fi
 	else # root user
-		printf "\n Executing command ${bold}$1${normal}\n\n"
+		printf " Executing command ${bold}$1${normal}\n"
 		$1
 	fi
 	pause
@@ -178,7 +177,7 @@ function printError() {
 
 
 # ------------------------------------------------------
-# Function:	Owerwrites itself with the latest version available online
+# Function:	 Check for updates and install them if user ask to
 # ------------------------------------------------------
 function selfUpdate() {
 	printHead
@@ -189,17 +188,14 @@ function selfUpdate() {
 	curl -o /tmp/interaptive_version $appVersionURL
 
 	appVersionLatest=`cat /tmp/interaptive_version`
-
 	if [[ "$appVersionLatest" == "Not Found" ]]; then
-		#printf "\n Unable to fetch version informations online ... aborting\n"
 		printError "2" "Unable to fetch version informations online ... aborting"
 	else # was able to fetch the version file online via curl
 		printf "\n Installed:\t\t\t$appVersion\n"
 		printf " Latest:\t\t\t$appVersionLatest\n\n"
 
-		if [[ $appVersionLatest > $appVersion ]]; then
+		if [[ $appVersionLatest > $appVersion ]]; then # found updates
 			printf " Found newer version\n"
-
 			# check if script was installed on expected location
 			if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
 		        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
@@ -222,7 +218,7 @@ function selfUpdate() {
 						printf "\n ${green}Press ANY key to quit ${bold}$appName${normal}"
 						read -n 1
 						clear
-						printf " ByeBye\n\n"
+						printf " Bye\n\n"
 						exit
 						;;
 				esac
@@ -238,6 +234,29 @@ function selfUpdate() {
 				printf " You are already using the latest version\n"
 			fi
 		fi
+	fi
+	pause
+}
+
+
+# ------------------------------------------------------
+# Function:		Shows app informations
+# ------------------------------------------------------
+function printAppInfo {
+	printHead
+	printf " ${bold}Software${normal}\n"
+	printf " Name:\t\t$appName\n"
+	printf " About:\t\t$appDescription\n"
+	printf " Version:\t$appVersion\n"
+	printf " URL:\t\t$appURL\n\n"
+	printf " Developer:\t$appAuthor\n"
+	printf " License:\t$appLicense\n\n\n"
+
+	if hash lsb_release 2>/dev/null; then # check for lsb_release
+		printf " ${bold}System${normal}\n "
+		lsb_release -d
+		printf " "
+		lsb_release -c
 	fi
 	pause
 }
@@ -264,7 +283,6 @@ function printHead {
 	clear
 
 	if (( $curLines < $minLines )); then # not enough height
-		#errorLinesHeight=" Window height ($curLines) is to small (min $minLines)\n"
 		errorLinesHeight=" ${bold}${red}ERROR${normal}\tWindow height ($curLines) is to small (min $minLines)\n"
 		errorCount=$((errorCount+1)) # Errorcount +1
 	else # enough height available
@@ -275,7 +293,6 @@ function printHead {
 
 	# check columns (width)
 	if (( $curColumns < $minColumns )); then
-		#errorColumnsWidth=" Window width ($curColumns) is to small (min $minColumns)\n"
 		errorColumnsWidth=" ${bold}${red}ERROR${normal}\tWindow width ($curColumns) is to small (min $minColumns)\n"
 		errorCount=$((errorCount+1)) # Errorcount +1
 	fi
@@ -314,8 +331,9 @@ function printCommandList {
 	# 1x = Update'ing
 	printf " ${bold}Update${normal}\n"
 	printf "  [1] Update package list\t\t\t(apt update)\n"
-	printf "  [2] Download and install updates\t\t(apt upgrade)\n"
-	printf "  [3] Download and install updates & deps.\t(apt dist-upgrade)\n\n"
+	printf "  [2] Download and install updates (normal)\t(apt upgrade)\n"
+	printf "  [3] Download and install updates (full)\t(apt full-upgrade)\n"
+	printf "  [4] Download and install updates (dist)\t(apt dist-upgrade)\n\n"
 
 	# 2x = search & info
 	printf " ${bold}Info${normal}\n"
@@ -369,7 +387,11 @@ function printCoreUI {
 				executeAPTCommand "apt upgrade" "sudo"
 				;;
 
-			[3]) # dist-upgrade
+			[3]) # full-upgrade
+				executeAPTCommand "apt full-upgrade" "sudo"
+				;;
+
+			[4]) # dist-upgrade
 				executeAPTCommand "apt dist-upgrade" "sudo"
 				;;
 
@@ -399,7 +421,7 @@ function printCoreUI {
 				;;
 
 			26) # list
-				read -p " ${green}List all [I]nstalled, [U]pgradable or [A]ll versions: ${normal}" listOption
+				read -p " ${green}List all${normal} [I]nstalled, [U]pgradable or [A]ll versions: " listOption
 				case $listOption in
 					[iI]) # list --installed
 						executeAPTCommand "apt list --installed"
@@ -448,14 +470,7 @@ function printCoreUI {
 				;;
 
 			[iI]) # help / info
-				printHead
-				printf " ${bold}Name:${normal}\t\t$appName\n"
-				printf " ${bold}About:${normal}\t\t$appDescription\n"
-				printf " ${bold}Version:${normal}\t$appVersion\n"
-				printf " ${bold}URL:${normal}\t\t$appURL\n\n"
-				printf " ${bold}Developer:${normal}\t$appAuthor\n"
-				printf " ${bold}License:${normal}\t$appLicense\n"
-				pause
+				printAppInfo
 				;;
 
 			[sS]) # selfupdate

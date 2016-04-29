@@ -64,3 +64,9 @@ Uninstall by running:
 > sudo make uninstall
 
 **interAPTive** comes with an selfupdate function which can be triggered from within the script.
+
+
+# Supported environments
+interAPTive was tested on so far on
+- Ubuntu 14.04
+- Ubuntu 16.04
