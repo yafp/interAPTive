@@ -28,7 +28,6 @@ The following commands are supported
 - apt update
 - apt upgrade
 - apt dist-upgrade
-- apt full-upgrade
 
 ## Info
 - apt search
@@ -48,6 +47,7 @@ The following commands are supported
 - apt remove
 - apt purge
 - apt-get autoremove
+- apt-get clean
 
 ## Misc
 - apt edit-sources
@@ -68,6 +68,6 @@ Uninstall by running:
 
 
 # Supported environments
-interAPTive was tested so far on
+interAPTive was tested on so far on
 - Ubuntu 14.04
 - Ubuntu 16.04

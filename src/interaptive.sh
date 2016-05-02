@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160429
+# Date				:20160502
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -28,7 +28,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160429.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160502.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -353,7 +353,9 @@ function printCommandList {
 	printf " ${bold}Removal${normal}\n"
 	printf " [41] Remove packages by name\t\t\t(apt remove)\n"
 	printf " [42] Purge packages by name\t\t\t(apt purge)\n" # Issue 8
-	printf " [43] Remove unneeded packages\t\t\t(apt-get autoremove)\n\n"
+	printf " [43] Remove unneeded packages\t\t\t(apt-get autoremove)\n"
+	printf " [44] Clear local repo from packaged files\t(apt-get clean)\n\n"
+
 
 	# misc
 	printf " ${bold}Misc${normal}\n"
@@ -459,6 +461,10 @@ function printCoreUI {
 
 			43) # autoremove
 				executeAPTCommand "apt-get autoremove" "sudo"
+				;;
+
+			44) # clean
+				executeAPTCommand "apt-get clean" "sudo"
 				;;
 
 			[eE]) # edit sources
