@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160502
+# Date				:20160503
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -21,14 +21,19 @@
 # 		trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
 
 
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Functions
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 # ------------------------------------------------------
-# Function: sets some readonly variables
+# Function: 	sets some readonly variables
 # ------------------------------------------------------
 function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160502.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160503.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -66,21 +71,6 @@ function checkForApt() {
 		printf "${bold}${red}FAILED${normal}\n"
 		printError "1" "Unable to find apt ... aborting"
         exit 1
-    fi
-}
-
-
-# ------------------------------------------------------
-# Function:		Checks if CURL can be found on that host or not
-#				Used on selfupdate
-# ------------------------------------------------------
-function checkForCURL() {
-	printf " Searching curl\t\t\t"
-	if hash curl 2>/dev/null; then # check for curl
-		printf "${bold}${green}PASSED${normal}\n"
-    else
-		printf "${bold}${red}FAILED${normal}\n"
-		printError "3" "Unable to find curl ... aborting"
     fi
 }
 
@@ -155,7 +145,7 @@ function executeAPTCommand() {
 
 
 # ------------------------------------------------------
-# Function:	Pauses the script logic and waits for user interaction
+# Function:		Pauses the script logic and waits for user interaction
 # ------------------------------------------------------
 function pause() {
 	printf "\n ${green}Press ANY key to continue${normal}"
@@ -165,76 +155,93 @@ function pause() {
 
 
 # ------------------------------------------------------
-# Function:	Outputs a human readable error
-# $1 = errorcode
-# $2 = error-string
+# Function:		Outputs a human readable error & writes to syslog if supported
+# 				$1 = errorcode
+# 				$2 = error-string
+#
+# Errors:
+#	1 = Unable to find apt
+#	2 = Unable to fetch version informations online
+#	3 = Unable to find curl
+#	4 = Invalid command entered
 # ------------------------------------------------------
 function printError() {
 	printf "\n ${bold}${red}ERROR${normal}\t$1\n"
 	printf "\t$2\n"
 	printf "\tVisit $appURL to report issues.\n"
+
+	# Log error to syslog (#25)
+	if hash logger 2>/dev/null; then # check for logger
+		logger "$appName ($appVersion) Error $1 - $2" #25
+	else
+		printf "${bold}${red}FAILED${normal}\tUnable to write log entry as logger is not installed."
+	fi
 }
 
 
 # ------------------------------------------------------
-# Function:	 Check for updates and install them if user ask to
+# Function:	 	Check for updates and install them if user ask to
 # ------------------------------------------------------
 function selfUpdate() {
 	printHead
-	checkForCURL
+	printf " Starting selfupdate...\n"
+	printf " Searching curl\t\t\t"
+	if hash curl 2>/dev/null; then # check for curl
+		printf "${bold}${green}PASSED${normal}\n"
+		curl -o /tmp/interaptive_version $appVersionURL # download version file to compare local vs online version
+		appVersionLatest=`cat /tmp/interaptive_version`
+		if [[ "$appVersionLatest" == "Not Found" ]]; then
+			printError "2" "Unable to fetch version informations online ... aborting"
+			return
+		else # was able to fetch the version file online via curl
+			printf "\n Installed:\t\t\t$appVersion\n"
+			printf " Online:\t\t\t$appVersionLatest\n\n"
+			if [[ $appVersionLatest > $appVersion ]]; then # found updates
+				printf " Found newer version\n"
+				# check if script was installed on expected location
+				if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
+			        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
 
-	# download version file to compare local vs online version
-	printf " Checking for updates...\n"
-	curl -o /tmp/interaptive_version $appVersionURL
-
-	appVersionLatest=`cat /tmp/interaptive_version`
-	if [[ "$appVersionLatest" == "Not Found" ]]; then
-		printError "2" "Unable to fetch version informations online ... aborting"
-	else # was able to fetch the version file online via curl
-		printf "\n Installed:\t\t\t$appVersion\n"
-		printf " Latest:\t\t\t$appVersionLatest\n\n"
-
-		if [[ $appVersionLatest > $appVersion ]]; then # found updates
-			printf " Found newer version\n"
-			# check if script was installed on expected location
-			if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
-		        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
-
-				# Ask if user wants to upgrade
-				read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [Y]es or ANY other key to cancel: ${normal}" answer
-			  	case $answer in
-					[yY])
-						# get latest version
-						curl -o /tmp/interaptive.sh $appDownloadURL
-						printf " Finished downloading latest version of ${bold}$appName${normal}\n"
-
-						if [[ $rootUser==false ]]; then
-							sudo cp /tmp/interaptive.sh $appPathFull
-						else
-							cp /tmp/interaptive.sh $appPathFull
-						fi
-						printf " Finished replacing ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n"
-						printf " You need to restart ${bold}$appName${normal} now to finish the update\n"
-						printf "\n ${green}Press ANY key to quit ${bold}$appName${normal}"
-						read -n 1
-						clear
-						printf " Bye\n\n"
-						exit
-						;;
-				esac
-		    else
-				printf " ${bold}${red}ERROR${normal} Unable to find installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal} (errno 1).\n\n"
-				printf " Visit ${bold}$appURL${normal} to report issues.\n"
-		        exit 1
-		    fi
-		else # there are no updates available because:
-			if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
-				printf " You are using a development version\n"
-			else # user is using latest official version
-				printf " You are already using the latest version\n"
+					# Ask if user wants to upgrade
+					read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [Y]es or ANY other key to cancel: ${normal}" answer
+				  	case $answer in
+						[yY])
+							# get latest version
+							curl -o /tmp/interaptive.sh $appDownloadURL
+							printf " Finished downloading latest version of ${bold}$appName${normal}\n"
+							# replace installed copy with new version
+							if [[ $rootUser==false ]]; then
+								sudo cp /tmp/interaptive.sh $appPathFull
+							else
+								cp /tmp/interaptive.sh $appPathFull
+							fi
+							printf " Finished replacing ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n"
+							printf " You need to restart ${bold}$appName${normal} now to finish the update\n"
+							printf "\n ${green}Press ANY key to quit ${bold}$appName${normal}"
+							read -n 1
+							clear
+							printf " Bye\n\n"
+							exit
+							;;
+					esac
+			    else
+					printf " ${bold}${red}ERROR${normal} Unable to find installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal} (errno 1).\n\n"
+					printf " Visit ${bold}$appURL${normal} to report issues.\n"
+			        exit 1
+			    fi
+			else # there are no updates available because:
+				if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
+					printf " You are using a development version\n"
+				else # user is using latest official version
+					printf " You are already using the latest version\n"
+				fi
 			fi
 		fi
-	fi
+
+    else # Check for Curl failed
+		printf "${bold}${red}FAILED${normal}\n"
+		printError "3" "Unable to find curl ... aborting"
+    fi
 	pause
 }
 
@@ -354,7 +361,7 @@ function printCommandList {
 	printf " [41] Remove packages by name\t\t\t(apt remove)\n"
 	printf " [42] Purge packages by name\t\t\t(apt purge)\n" # Issue 8
 	printf " [43] Remove unneeded packages\t\t\t(apt-get autoremove)\n"
-	printf " [44] Clear local repo from packaged files\t(apt-get clean)\n\n"
+	printf " [44] Remove all stored archives from cache\t(apt-get clean)\n\n"
 
 
 	# misc
@@ -368,10 +375,10 @@ function printCommandList {
 
 
 # ------------------------------------------------------
-# Function: Print head
-#			Print Command list
-#			Wait for user input
-#			Defines the inidividual commands for each command-entry
+# Function: 	Print head
+#				Print Command list
+#				Wait for user input
+#				Defines the inidividual commands for each command-entry
 # ------------------------------------------------------
 function printCoreUI {
 	while true
@@ -485,15 +492,24 @@ function printCoreUI {
 
 	   		[qQ]) # quit
 				clear
-				exit;;
+				exit
+				;;
+
+			"") # Just pressing enter/return without command number
+				;;
+
+			*)	# any other input = invalid input
+				printError "4" "Invalid command ... aborting"
+				pause
+				;;
 		esac
 	done
 }
 
 
-# ------------------------------------------------------
-# Script Logic
-# ------------------------------------------------------
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Main Script
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 initTextAndColors	# Loads the text & color definitions
 initAppBasics		# Loads the app-specific readonly variables
 

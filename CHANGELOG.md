@@ -1,11 +1,14 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
-0.6 - Rust (201605xx)
+0.6 - Rust (20160503)
 =====================
 - Change min window height handling (#20)
 - Add apt full-upgrade command (#22)
 - Add apt-get clean command (#23)
+- Write errors to syslog via logger (#25)
+- Optimize selfupdate (#26)
+- Invalid command input by user now throws an error message
 
 
 0.5 - sup? (20160425)
