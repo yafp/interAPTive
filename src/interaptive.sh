@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160503
+# Date				:20160504
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -33,7 +33,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160503.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160504.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -137,10 +137,9 @@ function executeAPTCommand() {
 		printf " Executing command ${bold}$1${normal}\n"
 		$1
 	fi
-	pause
-
 	unset $1
 	unset $2
+	pause
 }
 
 
@@ -150,7 +149,7 @@ function executeAPTCommand() {
 function pause() {
 	printf "\n ${green}Press ANY key to continue${normal}"
 	read -n 1
-   	printCoreUI
+	printCoreUI # reload main UI
 }
 
 

@@ -27,7 +27,9 @@ The following commands are supported
 ## Update
 - apt update
 - apt upgrade
+- apt full-upgrade
 - apt dist-upgrade
+
 
 ## Info
 - apt search
@@ -68,6 +70,7 @@ Uninstall by running:
 
 
 # Supported environments
-interAPTive was tested on so far on
+interAPTive should work on all Debian-based Linux distributions. It was tested in the past on the following setups:
 - Ubuntu 14.04
+- Ubuntu 15.10
 - Ubuntu 16.04
