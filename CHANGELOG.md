@@ -4,6 +4,10 @@
 
 0.7 - Less might be more (201605xx)
 ===================================
+- Log function is using 'less' if it displays '[A]ll' events
+- Added man-page tags to 'Info' function
+- Output and dialogs should now use similar colors / styles now
+- MinLines +1 = 35
 
 
 0.6 - Rust (20160503)

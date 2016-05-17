@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160504
+# Date				:20160517
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -33,7 +33,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160504.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160517.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -49,9 +49,10 @@ function initAppBasics() {
 # ---------------------------------------------------------------------
 function initTextAndColors() {
 	# styles
-	bold=$(tput bold)
-	normal=$(tput sgr0)
-	underline=$(tput smul)
+	normal=$(tput sgr0)				# default
+	bold=$(tput bold)				# bold
+	underline=$(tput smul)			# underline
+	background='\033[0;100m'		# background
 
 	# colors
 	red=$(tput setaf 1)
@@ -95,7 +96,7 @@ function checkForRootUser() {
 # ------------------------------------------------------
 function aptLog() {
 	printHead
-	read -p " ${green}Choose${normal} [I]nstall, [U]pgrade, [R]emove or [A]ll: " answer
+	read -p " ${green}Choose [${normal}I${green}]nstall, [${normal}U${green}]pgrade, [${normal}R${green}]emove or [${normal}A${green}]ll: ${normal}" answer
 	case $answer in
 		[iI]) # install
 			cat /var/log/dpkg.log | grep 'install '
@@ -110,7 +111,7 @@ function aptLog() {
 			;;
 
 		[aA]) # all
-			cat /var/log/dpkg.log
+			cat /var/log/dpkg.log | less
 			;;
 	esac
 	pause
@@ -137,9 +138,9 @@ function executeAPTCommand() {
 		printf " Executing command ${bold}$1${normal}\n"
 		$1
 	fi
-	unset $1
-	unset $2
 	pause
+	unset "$1"
+	unset "$2"
 }
 
 
@@ -166,8 +167,8 @@ function pause() {
 # ------------------------------------------------------
 function printError() {
 	printf "\n ${bold}${red}ERROR${normal}\t$1\n"
-	printf "\t$2\n"
-	printf "\tVisit $appURL to report issues.\n"
+	printf "\t$2\n\n"
+	printf "\tVisit ${background}$appURL${normal} to report issues.\n"
 
 	# Log error to syslog (#25)
 	if hash logger 2>/dev/null; then # check for logger
@@ -202,7 +203,7 @@ function selfUpdate() {
 			        printf " Detected installed version of ${bold}$appName${normal} at ${bold}$appPathFull${normal}\n\n"
 
 					# Ask if user wants to upgrade
-					read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [Y]es or ANY other key to cancel: ${normal}" answer
+					read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
 				  	case $answer in
 						[yY])
 							# get latest version
@@ -230,9 +231,9 @@ function selfUpdate() {
 			    fi
 			else # there are no updates available because:
 				if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
-					printf " You are using a development version\n"
+					printf " You are using a development version, nothing to do here.\n"
 				else # user is using latest official version
-					printf " You are already using the latest version\n"
+					printf " You are already using the latest official version\n"
 				fi
 			fi
 		fi
@@ -263,7 +264,11 @@ function printAppInfo {
 		lsb_release -d
 		printf " "
 		lsb_release -c
+		printf "\n\n"
 	fi
+
+	printf " ${bold}Man pages${normal}\n"
+	printf " ${background}apt${normal} ${background}apt-get${normal} ${background}apt-cache${normal}\n\n"
 	pause
 }
 
@@ -277,7 +282,7 @@ function printHead {
 	showASCIIArt=false		# Set a default value for boolean (assuming window is big enough)
 
 	# Height
-	minLines=34 			# Define min height (+5 for full ASCII-art)
+	minLines=35 			# Define min height (+5 for full ASCII-art)
 	curLines=$(tput lines)	# get lines of current terminal window
 	errorLinesHeight=""
 
@@ -429,7 +434,7 @@ function printCoreUI {
 				;;
 
 			26) # list
-				read -p " ${green}List all${normal} [I]nstalled, [U]pgradable or [A]ll versions: " listOption
+				read -p " ${green}List all [${normal}I${green}]nstalled, [${normal}U${green}]pgradable or [${normal}A${green}]ll versions: ${normal}" listOption
 				case $listOption in
 					[iI]) # list --installed
 						executeAPTCommand "apt list --installed"
