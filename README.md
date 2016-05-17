@@ -21,17 +21,16 @@
 apt-get and apt-cache are only used where needed.
 
 
-# Features
+# Implemented commands
 The following commands are supported
 
-## Update
+## Update commands
 - apt update
 - apt upgrade
 - apt full-upgrade
 - apt dist-upgrade
 
-
-## Info
+## Info commands
 - apt search
 - apt show
 - apt-cache policy
@@ -41,11 +40,11 @@ The following commands are supported
 - apt list --upgradable
 - apt list --all-versions
 
-## Install
+## Install commands
 - apt install
 - apt install --reinstall
 
-## Removal
+## Removal commands
 - apt remove
 - apt purge
 - apt-get autoremove
@@ -55,7 +54,7 @@ The following commands are supported
 - apt edit-sources
 
 
-# Getting started
+# Installation
 - Download latest version [here](https://github.com/yafp/interAPTive/archive/master.zip)
 - Extract the archive
 - Navigate to folder which contains this README.md
@@ -67,7 +66,7 @@ Uninstall by running:
 > sudo make uninstall
 
 
-# Updates
+# Updating
 **interAPTive** comes with an selfupdate function which can be triggered from within the script.
 
 
