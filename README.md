@@ -66,11 +66,13 @@ Install by running:
 Uninstall by running:
 > sudo make uninstall
 
+
+# Updates
 **interAPTive** comes with an selfupdate function which can be triggered from within the script.
 
 
-# Supported environments
-interAPTive should work on all Debian-based Linux distributions. It was tested in the past on the following setups:
+# Tested environments
+**interAPTive** should work on all Debian-based Linux distributions. It was tested/used in the past on
 - Ubuntu 14.04
 - Ubuntu 15.10
 - Ubuntu 16.04
