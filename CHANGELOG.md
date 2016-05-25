@@ -1,13 +1,18 @@
-![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive Changelog
+![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
 
 0.7 - Less might be more (201605xx)
 ===================================
-- Log function is using 'less' if it displays '[A]ll' events
 - Added man-page tags to 'Info' function
 - Output and dialogs should now use similar colors / styles now
 - MinLines +1 = 35
+- Improving output of startup checks
+- Removed checkForApt function
+- Log function is using 'less' if it displays '[A]ll' events (#27)
+- Added distribution check on start (#28)
+- Fixing a bug in the selfupdate function (#29)
+- Adding random developer quotes on app exit (#30)
 
 
 0.6 - Rust (20160503)

@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/license-GPL3-brightgreen.svg)](LICENSE)
 
 
-![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/fa-repeat_64_0_000000_none.png) interAPTive
+![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive
 ==========
 
 # About
@@ -9,7 +9,7 @@
 
 
 # Userinterface (UI)
-![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/doc/current_ui.png)
+![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/current_ui.png)
 
 
 # Requirements
