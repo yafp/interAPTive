@@ -2,17 +2,19 @@
 ==========
 
 
-0.7 - Less might be more (201605xx)
+0.7 - Less might be more (201606xx)
 ===================================
 - Added man-page tags to 'Info' function
 - Output and dialogs should now use similar colors / styles now
 - MinLines +1 = 35
 - Improving output of startup checks
 - Removed checkForApt function
+- Shrinking main UI via moving extra commands to insert prompt line (minLines = 30)
 - Log function is using 'less' if it displays '[A]ll' events (#27)
 - Added distribution check on start (#28)
 - Fixing a bug in the selfupdate function (#29)
 - Adding random developer quotes on app exit (#30)
+- Removed several script style errors using 'shellcheck' (#31)
 
 
 0.6 - Rust (20160503)
