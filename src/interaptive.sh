@@ -5,7 +5,7 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160610
+# Date				:20160615
 # Version			:0.6
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
@@ -33,7 +33,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160610.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.6.20160615.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -364,9 +364,9 @@ function printHead {
 		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
 	fi
 
-	printf "%s%s\n" "${bold}" "$appTagline"
+	printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}S${normal}]elfupdate | [${green}Q${normal}]uit)"
 
-	# print a green line under the header
+	#print a green line under the header
 	printf " %s" "${green}"
 	for (( c=1; c<=curColumns-2; c++ )); do
 		printf "-"
@@ -417,9 +417,6 @@ function printCommandList {
 	printf " %sMisc%s\n" "${bold}" "${normal}"
 	printf "  [E] Edit sources\t\t\t\t(apt edit-sources)\n" # Issue 4
 	printf "  [L] Show log\t\t\t\t\t(/var/log/dpkg)\n\n" # Issue 10
-	#printf "  [I] Info\n" # Issue 17
-	#printf "  [S] Selfupdate\n" # Issue 18
-	#printf "  [Q] Quit\n\n"
 }
 
 
@@ -435,7 +432,7 @@ function printCoreUI {
 		printHead			# print head
 		printCommandList	# print command list
 
-		read -p " ${green}Please enter a command number (I=Info | S=Selfupdate | Q=Quit): ${normal}" answer
+		read -p " ${green}Please enter a command number: ${normal}" answer
 	  	case $answer in
 			11) # update
 				executeAPTCommand "apt update" "sudo"
@@ -519,6 +516,7 @@ function printCoreUI {
 			44) # clean
 				executeAPTCommand "apt-get clean" "sudo"
 				;;
+
 			[eE]) # edit sources
 				executeAPTCommand "apt edit-sources" "sudo"
 				;;
