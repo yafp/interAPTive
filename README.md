@@ -9,6 +9,9 @@
 
 
 # Userinterface (UI)
+
+![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/interaptive_in_action.gif)
+
 ![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/current_ui.png)
 
 
