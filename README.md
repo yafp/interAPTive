@@ -50,7 +50,7 @@ The following commands are supported
 ## Removal commands
 - apt remove
 - apt purge
-- apt-get autoremove
+- apt autoremove
 - apt-get clean
 
 ## Misc

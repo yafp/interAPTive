@@ -5,8 +5,8 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20160615
-# Version			:0.6
+# Date				:20161212
+# Version			:0.9
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
@@ -33,7 +33,7 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="0.6.20160615.01" # 0.x.YYMMDDDD
+	readonly appVersion="0.9.20161212.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
 	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
@@ -410,7 +410,7 @@ function printCommandList {
 	printf " %sRemoval%s\n" "${bold}" "${normal}"
 	printf " [41] Remove packages by name\t\t\t(apt remove)\n"
 	printf " [42] Purge packages by name\t\t\t(apt purge)\n" # Issue 8
-	printf " [43] Remove unneeded packages\t\t\t(apt-get autoremove)\n"
+	printf " [43] Remove unneeded packages\t\t\t(apt autoremove)\n"
 	printf " [44] Remove all stored archives from cache\t(apt-get clean)\n\n"
 
 	# misc
@@ -511,7 +511,7 @@ function printCoreUI {
 				executeAPTCommand "apt purge $search" "sudo"
 				;;
 			43) # autoremove
-				executeAPTCommand "apt-get autoremove" "sudo"
+				executeAPTCommand "apt autoremove" "sudo"
 				;;
 			44) # clean
 				executeAPTCommand "apt-get clean" "sudo"
