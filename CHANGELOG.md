@@ -1,6 +1,11 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
+1.0 - Works for me (20161216)
+=============================
+- Finish him ;)
+
+
 
 0.7 - Less might be more (201606xx)
 ===================================
