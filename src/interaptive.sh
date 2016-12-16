@@ -5,113 +5,312 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20161216.01
-# Version			:1.0
+# Date				:20161216
+# Version			:2.0
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
 # Bash_version    	:4.3.14 				(tested with)
+# Requirements:
+# - whiptail
+# - curl
+# - apt
 
 
-# ------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# URLs & other developer notes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Whiptail Examples:
+# http://xmodulo.com/create-dialog-boxes-interactive-shell-script.html
+#
+# Whiptail Color Usage
+# http://askubuntu.com/questions/776831/whiptail-change-background-color-dynamically-from-magenta
+#
+# Yes & OK      = 0
+# No & Cancel   = 1
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developer/Debug Notes
-# ------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # Code stepping:
-#	Enable code stepping by placing the following cmd at the place you want to start debugging
+#	Enable code stepping by placing the following cmd at the place you want to start debugging:
 # 		trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
 
 
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Functions
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CONSTANTS
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ------------------------------------------------------
-# Function: 	sets some readonly variables
-# ------------------------------------------------------
-function initAppBasics() {
-	readonly appAuthor="yafp"
-	readonly appName="interAPTive"
-	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="1.0.20161216.01" # 0.x.YYMMDDDD
-	readonly appTagline=" $appName - $appDescription"
-	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
-	readonly appLicense="GPL3"
-	readonly appURL="https://github.com/yafp/interAPTive/"
-	readonly appDownloadURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive.sh"
-	readonly appVersionURL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
-	#set -o nounset # Handling for undefined variables
+# general stuff
+readonly APP_VERSION="2.0.20161216.02"
+readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
+readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
+readonly APP_LICENSE="GPL3"
+readonly APP_NAME_DESCRIPTION="interAPTive - $APP_VERSION - an interactive commandline interface for APT ($APP_LICENSE)"
+
+# version 2
+readonly APP_NAME_SHORT="interAPTive"
+readonly APP_PATH_FULL="/usr/bin/interaptive" # if 'installed' via makefile
+readonly APP_DOWNLOAD_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive.sh"
+
+# version 1 - aka - classic
+readonly APP_CLASSIC_NAME_SHORT="interAPTive-classic"
+readonly APP_CLASSIC_PATH_FULL="/usr/bin/interaptive-classic" # if 'installed' via makefile
+readonly APP_CLASSIC_DOWNLOAD_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive-classic.sh"
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CONFIG WHIPTAIL-SIZES
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# menu
+readonly DEFAULT_MENU_HEIGHT=16
+readonly DEFAULT_MENU_WIDTH=70
+readonly DEFAULT_MENU_LIST_HEIGHT=5
+#
+# questions/msgbox
+readonly DEFAULT_DIALOG_HEIGHT=10
+readonly DEFAULT_DIALOG_WIDTH=60
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SELFUPDATE
+#
+# Function:
+# - Checks online for interaptive updates
+# - Offers option to update the local interaptive installation
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+selfUpdate() 
+{
+	printHead
+	printf " Starting selfupdate...\n"
+	printf " Searching curl\t\t\t"
+	if hash curl 2>/dev/null; then # curl is installed - continue with selfupdate
+		printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
+
+		curl -o /tmp/interaptive_version $APP_VERSION_URL # download version file to compare local vs online version
+		APP_VERSION_LATEST=$(cat /tmp/interaptive_version)
+
+		if [[ "$APP_VERSION_LATEST" == "Not Found" ]]; then
+			printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
+			printError "2" "Unable to fetch version informations (${background}$APP_VERSION_URL${normal}) ... aborting"
+			pause
+			return
+		else # was able to fetch the version file online via curl
+			printf " Fetching update information\t%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
+			printf "\n Installed:\t\t\t%s\n" "$APP_VERSION"
+			printf " Online:\t\t\t%s\n\n" "$APP_VERSION_LATEST"
+			if [[ $APP_VERSION_LATEST > $APP_VERSION ]]; then # found updates
+				printf " Found newer version\n"
+				# check if script was installed on expected location
+				if hash "$APP_PATH_FULL" 2>/dev/null; then # check for installed version of this script
+			        printf " Detected installed version of %s%s%s at %s%s%s\n\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+
+					# Ask if user wants to upgrade
+					read -p " ${green}Do you really want to update ${bold}$APP_NAME_SHORT${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
+				  	case $answer in
+						[yY])
+							# get latest version of v2
+							curl -o /tmp/interaptive.sh $APP_DOWNLOAD_URL
+							printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
+							# replace installed copy with new version
+							if [[ $IS_ROOT_USER == false ]]; then
+								sudo cp /tmp/interaptive.sh $APP_PATH_FULL
+							else
+								cp /tmp/interaptive.sh $APP_PATH_FULL
+							fi
+							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+							
+							# get latest version of v1
+							curl -o /tmp/interaptive.sh $APP_CLASSIC_DOWNLOAD_URL
+							printf " Finished downloading latest classic version of %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}"
+							# replace installed copy with new version
+							if [[ $IS_ROOT_USER == false ]]; then
+								sudo cp /tmp/interaptive-classic.sh $APP_CLASSIC_PATH_FULL
+							else
+								cp /tmp/interaptive.sh $APP_CLASSIC_PATH_FULL
+							fi
+							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_CLASSIC_PATH_FULL" "${normal}"
+							
+							printf " You need to restart %s%s%s now to finish the update\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
+							printf "\n %sPress ANY key to quit %s%s%s" "${green}" "${bold}" "$APP_NAME_SHORT" "${normal}"
+							read -n 1
+							clear
+							printf " Bye\n\n"
+							exit
+							;;
+					esac
+			    else
+					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+					printf " Visit %s%s%s to report issues.\n" "${bold}" "$APP_PROJECT_URL" "${normal}"
+			        exit 1
+			    fi
+			else # there are no updates available because:
+				if [[ $APP_VERSION_LATEST < $APP_VERSION ]]; then # user has dev build
+					printf " You are using a development version, nothing to do here.\n"
+				else # user is using latest official version
+					printf " You are already using the latest official version\n"
+				fi
+			fi
+		fi
+    else # Curl is not installed -> can't check for updates
+		printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
+		printError "3" "Unable to find curl ... aborting"
+    fi
+	pause
 }
 
 
-# ---------------------------------------------------------------------
-# Function: 	Defines some text formating styles and colors
-# ---------------------------------------------------------------------
-function initTextAndColors() {
-	# styles
-	normal=$(tput sgr0)				# default
-	bold=$(tput bold)				# bold
-	#underline=$(tput smul)			# underline
-	background='\033[0;100m'		# background
 
-	# colors
-	red=$(tput setaf 1)
-	green=$(tput setaf 2)
-	yellow=$(tput setaf 3)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# RANDOM QUOTES
+#
+# Function:
+# - Displays a random developer quote on app-exit
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+showRandomDeveloperQuote()
+{
+    # Random Notes array
+    #
+	devQuote[0]="Prolific developers don't always write a lot of code, instead they solve a lot of problems. The two things are not the same."
+	devQuote[1]="Prolific programmers contribute to certain disaster."
+	devQuote[2]="Without requirements or design, programming is the art of adding bugs to an empty text file.\n\n\t${background}Louis Srygley${normal}"
+	devQuote[3]="Deleted code is debugged code."
+	devQuote[4]="There is no programming language–no matter how structured–that will prevent programmers from making bad programs."
+	devQuote[5]="The gap between theory and practice is not as wide in theory as it is in practice"
+	devQuote[6]="Good design adds value faster than it adds cost."
+	devQuote[7]="Errors should never pass silently. Unless explicitly silenced."
+	devQuote[8]="Reusing pieces of code is liked picking off sentences from other people's stories and trying to make a magazine article.\n\n\t${background}Bob Frankston${normal}"
+	devQuote[9]="Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.\n\n\t${background}Eagleson's law${normal}"
+	devQuote[10]="When debugging, novices insert corrective code; experts remove defective code.\n\n\t${background}Richard Pattis${normal}"
+	devQuote[11]="One of my most productive days was throwing away 1000 lines of code.\n\n\t${background}Ken Thompson${normal}" 
+	devQuote[12]="If the code and the comments disagree, then both are probably wrong.\n\n\t${background}Norm Schryer${normal}"
+	devQuote[13]="As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.\n\n\t${background}David Parnas${normal}"
+	devQuote[14]="The most important single aspect of software development is to be clear about what you are trying to build.\n\n\t${background}Bjarne Stroustrup${normal}"
+	devQuote[15]="Code formatting is about communication, and communication is the professional developer’s first order of business.\n\n\t${background}Robert C. Martin${normal}"
+	devQuote[16]="Programming is the art of doing one thing at a time.\n\n\t${background}Michael Feathers${normal}"
+	devQuote[17]="Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday's code.\n\n\t${background}Christopher Thompson${normal}"
+	devQuote[18]="In programming the hard part isn’t solving problems, but deciding what problems to solve.\n\n\t${background}Paul Graham${normal}"
+	devQuote[19]="A programmer is a device for turning caffeine into code.\n\n\t${background}Paul Erdos${normal}"
+
+
+    # Select a random quote
+	rand=$((RANDOM %  ${#devQuote[@]}))
+	#rand=$((RANDOM % 8))
+	
+	# Display random quote
+	printf " ${devQuote[$rand]}\n\n"
+
+    # exit application
+    exit
 }
 
 
-# ------------------------------------------------------
-# Function:		Checks if Distribution is supported
-#				Used on script start to check if it makes sense on that system or not
-#				Even if unsupported script will continue, but display a warning
-#				Using 'lsb_release' -i here
-# 				Supported output:
-#				- Debian
-#				- Ubuntu
-# ------------------------------------------------------
-function checkForLinuxDistribution() {
-	printf " Checking if distribution is supported\t"
 
-	if hash lsb_release 2>/dev/null; then # check for lsb_release
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# REQUIREMENTS
+#
+# Function:
+# - Checks for packages required by interaptive
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+checkRequirements()
+{
+    # whiptail - error
+    #
+    if hash whiptail 2>/dev/null; then # check for whiptail
+		:
+	else
+	    echo "whiptail is missing, aborting now"
+	    exit
+    fi
+    
+    # apt - error
+    #
+    if hash apt 2>/dev/null; then # check for apt
+		:
+	else
+	    echo "apt is missing, aborting now"
+	    exit
+    fi
+    
+    # curl - warning
+    #
+    if hash curl 2>/dev/null; then # check for apt
+		:
+	else
+	    echo "curl is missing, but needed for selfupdate."
+
+    fi
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PAUSE
+#
+# Function:
+# - Pauses the script
+# - Forces the user to press a key
+# - loads the matching next menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pause()
+{
+	printf "\n %sPress ANY key to continue%s" "${green}" "${normal}"
+	read -n 1
+	
+	if [ -z $1 ]; then  
+	    displayMainMenu # jump back to CoreMenu (fallback)
+    else 
+        $1 # if supplised - jump to the menu in question
+    fi
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  CHECK DISTRIBUTION
+#
+# Function:
+# - Checks the linux distribution used at application start
+# - displays warnings if executed on untested and/or unsupported distributions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+checkForLinuxDistribution()
+{
+    if hash lsb_release 2>/dev/null; then # check for lsb_release
 		curDistri=$(lsb_release -i)
 
-		if [[ $curDistri == *"Ubuntu"* ]] || [[ $curDistri == *"Debian"* ]] ; then
-			#printf "${bold}${green}PASSED${normal}\n"
-			printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
-		else
-			#printf "${bold}${yellow}WARN${normal}\n\n"
-			printf "%s%sWARN%s\n\n" "${bold}" "${yellow}" "${normal}"
-			printf " Feel free to continue while your distribution is not supported nor even tested.\n"
-			pause
+        # Check if it is an unsupported linux version
+		if [[ $curDistri != *"Ubuntu"* ]] && [[ $curDistri != *"Debian"* ]] ; then
+		
+		    # check if apt exists
+		    if hash apt 2>/dev/null; then # check for apt
+		        whiptail --title "WARNING - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system. Feel free to use it anyways, but expect issues." 10 $DEFAULT_MENU_WIDTH
+	        else # unsupported distri and no apt -> exit
+                whiptail --title "ERROR - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system without apt. Aborting now" 0 0
+		        exit
+            fi
 		fi
-	fi
-
+    fi
 }
 
 
-# ------------------------------------------------------
-# Function: 	Checks if the executing user is root or not
-#				Needed to decide if sudo is needed or not
-# ------------------------------------------------------
-function checkForRootUser() {
-	printf " Checking user permissions\t\t"
-	if [ "$EUID" -ne 0 ]; then # current user != root
-		rootUser=false
-  	else # current user = root
-		rootUser=true
-	fi
-	#printf "${bold}${green}PASSED${normal}\n\n"
-	printf "%s%sPASSED%s\n\n" "${bold}" "${green}" "${normal}"
-}
 
-
-# ------------------------------------------------------
-# Function: 	Searches the dpkg log for some specific keywords & Shows the result
-# Source:		http://linuxcommando.blogspot.de/2008/08/how-to-show-apt-log-history.html
-# Check: 		https://github.com/blyork/apt-history for better approach
-# ------------------------------------------------------
-function aptLog() {
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# LOG
+#
+# Function:
+# - Gives access to the dpkg log
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dpkgLog()
+{
 	printHead
 	printf " You are going to load the dpkg log (/var/log/dpkg).\n Select one of the following options:\n\n"
 	printf " [%sI%s]nstall\n [%sU%s]pgrade\n [%sR%s]emove\n [%sA%s]ll\t\t[default]\n\n" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}"
@@ -140,193 +339,358 @@ function aptLog() {
 }
 
 
-# ------------------------------------------------------
-# Function:		Executes the command in $1 (after user selected an existing  command number)
-#				$1 = command to execute
-#				$2 = if $2 is set, it means the commands needs sudo permissions for normal users
-# ------------------------------------------------------
-function executeAPTCommand() {
-	printHead
-	if [[ $rootUser == false ]]; then # not a root user - check if command needs sudo permissions or not
-		# executing as non-root user - lets check if the commands needs sudo permissions or not
-		if [[ -z $2  ]]; then # sudo is NOT needed
-			printf " Executing command: %s%s%s\n\n" "${bold}" "$1" "${normal}"
-			#$1
-			CMD="$1"
-		else # sudo is needed
-			printf " Executing command: %s%s %s%s\n\n" "${bold}" "$2" "$1" "${normal}"
-			#sudo $1
-			CMD="sudo $1"
-		fi
-	else # root user
-		printf " Executing command: %s%s%s\n\n" "${bold}" "$1" "${normal}"
-		#$1
-		CMD="$1"
-	fi
-	$CMD # execute the command
-	pause
-	unset "$1"
-	unset "$2"
-}
 
-
-# ------------------------------------------------------
-# Function:		Pauses the script logic and waits for user interaction
-# ------------------------------------------------------
-function pause() {
-	printf "\n %sPress ANY key to continue%s" "${green}" "${normal}"
-	read -n 1
-	printCoreUI # reload main UI
-}
-
-
-# ------------------------------------------------------
-# Function:		Outputs a human readable error & writes to syslog if supported
-# 				$1 = errorcode
-# 				$2 = error-string
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# MENU: Main
 #
-# Errors:
-#	1 = Unable to find apt
-#	2 = Unable to fetch version informations online
-#	3 = Unable to find curl
-#	4 = Invalid command entered
-# ------------------------------------------------------
-function printError() {
-	printf "\n %s%sERROR%s\t%s\n" "${bold}" "${red}" "${normal}" "$1"
-	printf "\t%s\n\n" "$2"
-	printf "\tVisit %s%s%s to report issues.\n" "${background}" "$appURL" "${normal}"
-
-	# Log error to syslog (#25)
-	if hash logger 2>/dev/null; then # check for logger
-		logger "$appName ($appVersion) Error $1 - $2" #25
-	else
-		printf "%s%sFAILED%s\tUnable to write log entry as logger is not installed." "${bold}" "${red}" "${normal}"
-	fi
-}
-
-
-# ------------------------------------------------------
-# Function:	 	Check for updates and install them if user ask to
-# ------------------------------------------------------
-function selfUpdate() {
-	printHead
-	printf " Starting selfupdate...\n"
-	printf " Searching curl\t\t\t"
-	if hash curl 2>/dev/null; then # curl is installed - continue with selfupdate
-		printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
-
-		curl -o /tmp/interaptive_version $appVersionURL # download version file to compare local vs online version
-		#appVersionLatest=`cat /tmp/interaptive_version`
-		appVersionLatest=$(cat /tmp/interaptive_version)
-
-		if [[ "$appVersionLatest" == "Not Found" ]]; then
-			printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
-			printError "2" "Unable to fetch version informations (${background}$appVersionURL${normal}) ... aborting"
-			pause
-			return
-		else # was able to fetch the version file online via curl
-			printf " Fetching update information\t%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
-			printf "\n Installed:\t\t\t%s\n" "$appVersion"
-			printf " Online:\t\t\t%s\n\n" "$appVersionLatest"
-			if [[ $appVersionLatest > $appVersion ]]; then # found updates
-				printf " Found newer version\n"
-				# check if script was installed on expected location
-				if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
-			        printf " Detected installed version of %s%s%s at %s%s%s\n\n" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-
-					# Ask if user wants to upgrade
-					read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
-				  	case $answer in
-						[yY])
-							# get latest version
-							curl -o /tmp/interaptive.sh $appDownloadURL
-							printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$appName" "${normal}"
-							# replace installed copy with new version
-							if [[ $rootUser == false ]]; then
-								sudo cp /tmp/interaptive.sh $appPathFull
-							else
-								cp /tmp/interaptive.sh $appPathFull
-							fi
-							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-							printf " You need to restart %s%s%s now to finish the update\n" "${bold}" "$appName" "${normal}"
-							printf "\n %sPress ANY key to quit %s%s%s" "${green}" "${bold}" "$appName" "${normal}"
-							read -n 1
-							clear
-							printf " Bye\n\n"
-							exit
-							;;
-					esac
-			    else
-					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-					printf " Visit %s%s%s to report issues.\n" "${bold}" "$appURL" "${normal}"
-			        exit 1
-			    fi
-			else # there are no updates available because:
-				if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
-					printf " You are using a development version, nothing to do here.\n"
-				else # user is using latest official version
-					printf " You are already using the latest official version\n"
-				fi
-			fi
-		fi
-    else # Curl is not installed -> can't check for updates
-		printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
-		printError "3" "Unable to find curl ... aborting"
+# Function:
+# - displays the main menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displayMainMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Exit" --menu "Main" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    "1" "Maintenance" \
+    "2" "Information" \
+    "3" "Install" \
+    "4" "Uninstall" \
+    "5" "Settings"  3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            1)
+                displayMaintenanceMenu
+                ;;
+            2)
+                displayInfoMenu
+                ;;
+            3) 
+                displayInstallMenu
+                ;;
+            4)
+                displayUninstallMenu
+                ;;
+            5) 
+                displaySettingsMenu
+                ;;
+        esac
+    else
+        printHead
+        showRandomDeveloperQuote
     fi
-	pause
 }
 
 
-# ------------------------------------------------------
-# Function:		Print a random developer quote on exiting the app
-# ------------------------------------------------------
-function showRandomDeveloperQuote {
-	devQuote[0]="Prolific developers don't always write a lot of code, instead they solve a lot of problems. The two things are not the same."
-	devQuote[1]="Prolific programmers contribute to certain disaster."
-	devQuote[2]="Without requirements or design, programming is the art of adding bugs to an empty text file."
-	devQuote[3]="Deleted code is debugged code."
-	devQuote[4]="There is no programming language–no matter how structured–that will prevent programmers from making bad programs."
-	devQuote[5]="The gap between theory and practice is not as wide in theory as it is in practice"
-	devQuote[6]="Good design adds value faster than it adds cost."
-	devQuote[7]="Errors should never pass silently. Unless explicitly silenced."
 
-	#rand=$[$RANDOM % 8]
-	rand=$((RANDOM % 8))
-	printf "\n %s%s%s\n" "${green}" "${devQuote[$rand]}" "${normal}"
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  MENU: MAINTENANCE
+#
+# Function:
+# - displays the maintenance menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displayMaintenanceMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Maintenance" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 7 \
+    ".." "" \
+    "Update package informations" "(sudo apt update)" \
+    "Upgrade installed packages" "(sudo apt upgrade)" \
+    "Clean" "(sudo apt clean)" \
+    "Autoclean" "(sudo apt autoclean)" \
+    "Autoremove unneeded packages" "(sudo apt autoremove)" \
+    "Edit apt sources" "(sudo apt edit-sources)" 3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            "..")
+                displayMainMenu # jump back to CoreMenu
+                ;;
+                
+            "Update package informations")
+                executeCommand "displayMaintenanceMenu" "apt update" "sudo"
+                ;;
+                
+            "Upgrade installed packages")
+                executeCommand "displayMaintenanceMenu" "apt upgrade" "sudo"
+                ;;
+                
+            "Clean")
+                executeCommand "displayMaintenanceMenu" "apt clean" "sudo"
+                ;;
+                
+            "Autoclean")
+                executeCommand "displayMaintenanceMenu" "apt autoclean" "sudo"
+                ;;
+                
+            "Autoremove unneeded packages")
+                executeCommand "displayMaintenanceMenu" "apt autoremove" "sudo"
+                ;;
+                
+            "Edit apt sources")
+                executeCommand "displayMaintenanceMenu" "apt edit-sources" "sudo"
+                ;;
+        esac
+    else
+        displayMainMenu # jump back to CoreMenu
+    fi
 }
 
 
-# ------------------------------------------------------
-# Function:		Shows app informations
-# ------------------------------------------------------
-function printAppInfo {
-	printHead
-	printf " %sSoftware%s\n" "${bold}" "${normal}"
-	printf " Name:\t\t%s\n" "$appName"
-	printf " About:\t\t%s\n" "$appDescription"
-	printf " Version:\t%s\n" "$appVersion"
-	printf " URL:\t\t%s\n\n" "$appURL"
-	printf " Developer:\t%s\n" "$appAuthor"
-	printf " License:\t%s\n\n\n" "$appLicense"
 
-	if hash lsb_release 2>/dev/null; then # check for lsb_release
-		printf " %sSystem%s\n " "${bold}" "${normal}"
-		lsb_release -d
-		printf " "
-		lsb_release -c
-		printf "\n\n"
-	fi
-	printf " %sMan pages%s\n" "${bold}" "${normal}"
-	printf " ${background}apt${normal} ${background}apt-get${normal} ${background}apt-cache${normal}\n\n"
-	pause
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# MENU: INFO
+#
+# Function:
+# - displays the info menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displayInfoMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 8 \
+    ".." "" \
+    "Show dpkg log" "(/var/log/dpkg)" \
+    "Search package" "(apt search)" \
+    "Show package information" "(apt show)" \
+    "Show package version information" "(apt-cache policy)" \
+    "Show package changelog" "(apt-get changelog)"  \
+    "Show package dependencies" "(apt-cache depends)"  \
+    "Show package list" "(apt list)"  3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            "..")
+                displayMainMenu # jump back to CoreMenu
+                ;;
+                
+            "Show dpkg log")
+                dpkgLog
+                ;;
+                
+            "Search package")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a search phrase" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInfoMenu" "apt search $SEARCH_STRING"
+                else
+                    displayInfoMenu
+                fi
+                ;;
+                
+            "Show package information")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInfoMenu" "apt show $SEARCH_STRING"
+                else
+                    displayInfoMenu
+                fi
+                ;;
+                
+            "Show package version information")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInfoMenu" "apt-cache policy $SEARCH_STRING"
+                else
+                    displayInfoMenu
+                fi
+                ;;
+                
+            "Show package changelog")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInfoMenu" "apt-get changelog $SEARCH_STRING"
+                else
+                    displayInfoMenu
+                fi
+                ;;
+                
+            "Show package dependencies")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInfoMenu" "apt-cache depends $SEARCH_STRING"
+                else
+                    displayInfoMenu
+                fi
+                ;;
+                
+            "Show package list")
+                OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+                "<-- Back" "" \
+                "Installed" "(apt list --installed)" \
+                "Upgradeable" "(apt list --upgradeable)" \
+                "All" "(apt list --all-versions)"  3>&1 1>&2 2>&3)
+
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    case $OPTION in
+                        "<-- Back")
+                            displayInfoMenu
+                            ;;
+                            
+                        "Installed")
+                            executeCommand "displayInfoMenu" "apt list --installed"
+                            ;;
+                            
+                        "Upgradeable")
+                            executeCommand "displayInfoMenu" "apt list --upgradeable"
+                            ;;
+                            
+                        "All")
+                            executeCommand "displayInfoMenu" "apt list --all-versions"
+                            ;;
+                    esac
+                else
+                    displayInfoMenu
+                fi
+
+        esac
+    else
+        displayMainMenu # jump back to CoreMenu
+    fi
 }
 
 
-# ------------------------------------------------------
-# Function:		Detects size of terminal window & displays warnings if to small
-# 				Prints a header including appname & description
-# ------------------------------------------------------
-function printHead {
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  MENU: INSTALL
+#
+# Function:
+# - displays the install menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displayInstallMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Install" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    ".." "" \
+    "Install" "(sudo apt install)" \
+    "Re-Install" "(sudo apt install --reinstall)"  3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            "..")
+                displayMainMenu # jump back to CoreMenu
+                ;;
+                
+            "Install")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInstallMenu" "apt install $SEARCH_STRING" "sudo"
+                else
+                    displayInstallMenu
+                fi
+                ;;
+                
+            "Re-Install")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayInstallMenu" "apt install --reinstall $SEARCH_STRING" "sudo"
+                else
+                    displayInstallMenu
+                fi
+                ;;
+        esac
+    else
+        displayMainMenu # jump back to CoreMenu
+    fi
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  MENU: UNINSTALL
+#
+# Function:
+# - displays the uninstall menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displayUninstallMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Uninstall" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    ".." ""  \
+    "Remove package" "(sudo apt remove)"  \
+    "Purge package" "(sudo apt purge)"  3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            "..")
+                displayMainMenu # jump back to CoreMenu
+                ;;
+                
+            "Remove package")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" 10 60 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayUninstallMenu" "apt remove $SEARCH_STRING" "sudo"
+                else
+                    displayUninstallMenu
+                fi
+                ;;
+                
+            "Purge package")
+                SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" 10 60 3>&1 1>&2 2>&3)
+                EXITSTATUS=$?
+                if [ $EXITSTATUS = 0 ]; then
+                    executeCommand "displayUninstallMenu" "apt purge $SEARCH_STRING" "sudo"
+                else
+                    displayUninstallMenu
+                fi
+                ;;
+        esac
+    else
+        displayMainMenu # jump back to CoreMenu
+    fi
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# MENU: SETTINGS
+#
+# Function:
+# - displays the settings menu
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+displaySettingsMenu()
+{
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Settings" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    ".." "" \
+    "Selfupdate" "" \
+    "Github" "($APP_PROJECT_URL)" 3>&1 1>&2 2>&3)
+     
+    EXITSTATUS=$?
+    if [ $EXITSTATUS = 0 ]; then
+        case $OPTION in
+            "..")
+                displayMainMenu # jump back to CoreMenu
+                ;;
+                
+            "Selfupdate")
+                selfUpdate
+                ;;
+                
+            "Github")
+                xdg-open "$APP_PROJECT_URL"
+                displayMainMenu
+        esac
+    else
+        displayMainMenu # jump back to CoreMenu
+    fi
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PRINT HEAD
+#
+# Function:
+# - prints an interaptive ascii-art for terminal outputs
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function printHead() 
+{
 	errorCount=0			# Init errorCounter to 0
 	showASCIIArt=false		# Set a default value for boolean (assuming window is to small)
 
@@ -364,7 +728,7 @@ function printHead {
 		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
 	fi
 
-	printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}S${normal}]elfupdate | [${green}Q${normal}]uit)"
+	#printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}S${normal}]elfupdate | [${green}Q${normal}]uit)"
 
 	#print a green line under the header
 	printf " %s" "${green}"
@@ -383,175 +747,101 @@ function printHead {
 }
 
 
-# ------------------------------------------------------
-# Function:		Prints a command listing (all functions)
-# ------------------------------------------------------
-function printCommandList {
-	# 1x = Update'ing
-	printf " %sUpdate & Upgrade%s\n" "${bold}" "${normal}"
-	printf " [11] Update local package information\t\t(apt update)\n"
-	printf " [12] Download and install updates\t\t(apt upgrade)\n\n"
 
-	# 2x = search & info
-	printf " %sInformation%s\n" "${bold}" "${normal}"
-	printf " [21] Search packages by name\t\t\t(apt search)\n"
-	printf " [22] Show package information\t\t\t(apt show)\n"
-	printf " [23] Show package version information\t\t(apt-cache policy)\n"
-	printf " [24] Changelog for single package\t\t(apt-get changelog)\n" # Issue 13
-	printf " [25] Dependencies for single package\t\t(apt-cache depends)\n" # Issue 12
-	printf " [26] List packages\t\t\t\t(apt list)\n\n" # Issue 3
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# EXECUTECOMMAND
+#
+# Function:
+# - executes the apt commands
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+executeCommand()
+{
+    printHead
 
-	# 3x = install
-	printf " %sInstall%s\n" "${bold}" "${normal}"
-	printf " [31] Install new packages by name\t\t(apt install)\n"
-	printf " [32] Reinstall a packages by name\t\t(apt install --reinstall)\n\n" # Issue 14
-
-	# 4x = remove
-	printf " %sRemoval%s\n" "${bold}" "${normal}"
-	printf " [41] Remove packages by name\t\t\t(apt remove)\n"
-	printf " [42] Purge packages by name\t\t\t(apt purge)\n" # Issue 8
-	printf " [43] Remove unneeded packages\t\t\t(apt autoremove)\n"
-	printf " [44] Remove all stored archives from cache\t(apt-get clean)\n\n"
-
-	# misc
-	printf " %sMisc%s\n" "${bold}" "${normal}"
-	printf "  [E] Edit sources\t\t\t\t(apt edit-sources)\n" # Issue 4
-	printf "  [L] Show log\t\t\t\t\t(/var/log/dpkg)\n\n" # Issue 10
+    if [[ $IS_ROOT_USER == false ]]; then # not a root user - check if command needs sudo permissions or not
+		# executing as non-root user - lets check if the commands needs sudo permissions or not
+		if [[ -z $3  ]]; then # sudo is NOT needed
+			printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
+			#$1
+			CMD="$2"
+		else # sudo is needed
+			printf " Executing command: %s%s %s%s\n\n" "${bold}" "$3" "$2" "${normal}"
+			#sudo $1
+			CMD="sudo $2"
+		fi
+	else # root user
+		printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
+		#$1
+		CMD="$2"
+	fi
+    $CMD # execute the command
+    pause "$1"
+	unset "$1"
+    unset "$2"
+    unset "$3"
 }
 
 
-# ------------------------------------------------------
-# Function: 	Print head
-#				Print Command list
-#				Wait for user input
-#				Defines the inidividual commands for each command-entry
-# ------------------------------------------------------
-function printCoreUI {
-	while true
-	do
-		printHead			# print head
-		printCommandList	# print command list
 
-		read -p " ${green}Please enter a command number: ${normal}" answer
-	  	case $answer in
-			11) # update
-				executeAPTCommand "apt update" "sudo"
-				;;
-
-			12) # upgrade
-				printHead
-				printf " You are going to update your system using the apt-upgrade command.\n\n"
-				printf " [%sN%s]ormal\t(apt upgrade)\t[default]\n [%sF%s]ull\t\t(apt full-upgrade)\n [%sD%s]ist\t\t(apt dist-upgrade)\n\n" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}"
-				read -p " ${green}Please choose: ${normal}" upgradeType
-				case $upgradeType in
-					[nN]) # apt upgrade
-						executeAPTCommand "apt upgrade" "sudo"
-						;;
-					"") # default - same as above
-						executeAPTCommand "apt upgrade" "sudo"
-						;;
-					[fF]) # full-upgrade
-						executeAPTCommand "apt full-upgrade" "sudo"
-						;;
-					[dD]) # dist-upgrade
-						executeAPTCommand "apt dist-upgrade" "sudo"
-						;;
-				esac
-				;;
-
-			21) # search
-				read -p " ${green}Searching for: ${normal}" search
-				executeAPTCommand "apt search $search"
-				;;
-			22) # show
-				read -p " ${green}Show info for pkg: ${normal}" search
-				executeAPTCommand "apt show $search"
-				;;
-			23) # policy
-				read -p " ${green}Show policy for pkg: ${normal}" search
-				executeAPTCommand "apt-cache policy $search"
-				;;
-			24) # changelog
-				read -p " ${green}Please enter a package name for changelog: ${normal}" search
-				executeAPTCommand "apt-get changelog $search"
-				;;
-			25) # depends
-				read -p " ${green}Please enter a package name for dependencies: ${normal}" search
-				executeAPTCommand "apt-cache depends $search"
-				;;
-			26) # list
-				read -p " ${green}List all [${normal}I${green}]nstalled, [${normal}U${green}]pgradable or [${normal}A${green}]ll versions: ${normal}" listOption
-				case $listOption in
-					[iI]) # list --installed
-						executeAPTCommand "apt list --installed"
-						;;
-					[uU]) # list --upgradable
-						executeAPTCommand "apt list --upgradable"
-						;;
-					[aA]) # list --all-versions
-						executeAPTCommand "apt list --all-versions"
-						;;
-				esac
-				;;
-
-			31) # install
-				read -p " ${green}Please enter a package name for installation: ${normal}" search
-				executeAPTCommand "apt install $search" "sudo"
-				;;
-			32) # reinstall
-				read -p " ${green}Please enter a package name for re-installation: ${normal}" search
-				executeAPTCommand "apt install --reinstall $search" "sudo"
-				;;
-			41) # remove
-				read -p " ${green}Please enter a package name for removal: ${normal}" search
-				executeAPTCommand "apt remove $search" "sudo"
-				;;
-			42) # purge
-				read -p " ${green}Please enter a package name for purge: ${normal}" search
-				executeAPTCommand "apt purge $search" "sudo"
-				;;
-			43) # autoremove
-				executeAPTCommand "apt autoremove" "sudo"
-				;;
-			44) # clean
-				executeAPTCommand "apt-get clean" "sudo"
-				;;
-
-			[eE]) # edit sources
-				executeAPTCommand "apt edit-sources" "sudo"
-				;;
-			[lL]) # apt log
-				aptLog
-				;;
-			[iI]) # help / info
-				printAppInfo
-				;;
-			[sS]) # selfupdate
-				selfUpdate
-				;;
-	   		[qQ]) # quit
-				clear
-				showRandomDeveloperQuote
-				exit
-				;;
-			"") # Just pressing enter/return without command number
-				;;
-			*)	# any other input = invalid input
-				printError "4" "Invalid command ... aborting"
-				pause
-				;;
-		esac
-	done
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CHECK FOR ROOT USER
+#
+# Function:
+# - checks on interaptive start if the script is launched as root user or not
+# - needed to check if sudo is needed or not for executing commands in executeCommand()
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function checkForRootUser() 
+{
+	if [ "$EUID" -ne 0 ]; then # current user != root
+		IS_ROOT_USER=false
+  	else # current user = root
+		IS_ROOT_USER=true
+	fi
 }
 
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Main Script
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-initTextAndColors			# Loads the text & color definitions
-initAppBasics				# Loads the app-specific readonly variables
 
-printHead 					# print script head in case of errors in checkForApt
-checkForLinuxDistribution	# Check if distribution is supported or not
-checkForRootUser			# check if user is root or not
-printCoreUI 				# run the main loop and wait for user input
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# INIT TEXT AND COLORS
+#
+# Function:
+# - defines some text color and formatting variables
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function initTextAndColors() 
+{
+	# styles
+	normal=$(tput sgr0)				# default
+	bold=$(tput bold)				# bold
+	#underline=$(tput smul)			# underline
+	background='\033[0;100m'		# background
+
+	# colors
+	red=$(tput setaf 1)
+	green=$(tput setaf 2)
+	yellow=$(tput setaf 3)
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ON STARTUP
+#
+# Function:
+# - launches all startup relevant functions on application start
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+onStartup()
+{
+    checkRequirements           # check for required packages
+    checkForLinuxDistribution   # check if linuc distri is supported or not
+    initTextAndColors           # init color & forating variables
+    checkForRootUser            # check if current user is root or not
+    displayMainMenu             # load the main menu
+}
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Start the nightmare
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+onStartup
+
