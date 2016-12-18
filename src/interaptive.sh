@@ -47,7 +47,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # general stuff
-readonly APP_VERSION="2.0.20161216.02"
+readonly APP_VERSION="2.0.20161218.01"
 readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
 readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
 readonly APP_LICENSE="GPL3"
