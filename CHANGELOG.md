@@ -1,6 +1,12 @@
 ![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive Changelog
 ==========
 
+2.0 - Whiptail it (20161216)
+============================
+- Moved to whiptail for most UI cases
+
+
+
 1.0 - Works for me (20161216)
 =============================
 - Finish him ;)
@@ -22,6 +28,7 @@
 - Removed several script style errors using 'shellcheck' (#31)
 
 
+
 0.6 - Rust (20160503)
 =====================
 - Change min window height handling (#20)
@@ -32,12 +39,14 @@
 - Invalid command input by user now throws an error message
 
 
+
 0.5 - sup? (20160425)
 =====================
 - Optimized window-size check (ASCII-art might get hidden if that helps) (#16)
 - Add Help command (#17)
 - Add selfupdate function (#18)
 - Migrate apt list command (#19)
+
 
 
 0.4 - aptsh? (20160419)
@@ -50,12 +59,14 @@
 - Add window-size check (#15)
 
 
+
 0.3 - Some more (20160418)
 ==========================
 - Optimize command-list formatting (#7)
 - Add command apt purge (#8)
 - Fix bug in pause function (#9)
 - Add apt history function (#10)
+
 
 
 0.2 - More more more (20160416)
@@ -65,6 +76,7 @@
 - Add command apt list (#3)
 - Add command apt edit-sources (#4)
 - Adding a changelog (#6)
+
 
 
 0.1 - The initial one (20160416)

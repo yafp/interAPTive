@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# Title				:interaptive.sh
-# Description		:An interactive commandline interface for APT
-#											(inspired by yaourt-gui)
-# Author			:yafp
-# URL				:https://github.com/yafp/interAPTive/
-# Date				:20161216
-# Version			:2.0
-# Usage		 		:bash interaptive.sh 	(non-installed)
-#					:interaptive			(installed via Makefile)
-# Notes				:None
-# Bash_version    	:4.3.14 				(tested with)
+# Title                 :interaptive.sh
+# Description           :An interactive commandline interface for APT (inspired by yaourt-gui)
+# Author                :yafp
+# URL                   :https://github.com/yafp/interAPTive/
+# Date                  :20161219
+# Version               :2.0
+# Usage                 :bash interaptive.sh        (non-installed)
+#                       :interaptive                (installed via Makefile)
+# Notes                 :None
+# Bash_version          :4.3.14                     (tested with)
 # Requirements:
 # - whiptail
 # - curl
@@ -37,8 +36,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Code stepping:
-#	Enable code stepping by placing the following cmd at the place you want to start debugging:
-# 		trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
+#    Enable code stepping by placing the following cmd at the place you want to start debugging:
+#         trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
 
 
 
@@ -47,7 +46,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # general stuff
-readonly APP_VERSION="2.0.20161218.01"
+readonly APP_VERSION="2.0.20161219.01"
 readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
 readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
 readonly APP_LICENSE="GPL3"
@@ -89,83 +88,83 @@ readonly DEFAULT_DIALOG_WIDTH=60
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 selfUpdate() 
 {
-	printHead
-	printf " Starting selfupdate...\n"
-	printf " Searching curl\t\t\t"
-	if hash curl 2>/dev/null; then # curl is installed - continue with selfupdate
-		printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
+    printHead
+    printf " Starting selfupdate...\n"
+    printf " Searching curl\t\t\t"
+    if hash curl 2>/dev/null; then # curl is installed - continue with selfupdate
+        printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
 
-		curl -o /tmp/interaptive_version $APP_VERSION_URL # download version file to compare local vs online version
-		APP_VERSION_LATEST=$(cat /tmp/interaptive_version)
+        curl -o /tmp/interaptive_version $APP_VERSION_URL # download version file to compare local vs online version
+        APP_VERSION_LATEST=$(cat /tmp/interaptive_version)
 
-		if [[ "$APP_VERSION_LATEST" == "Not Found" ]]; then
-			printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
-			printError "2" "Unable to fetch version informations (${background}$APP_VERSION_URL${normal}) ... aborting"
-			pause
-			return
-		else # was able to fetch the version file online via curl
-			printf " Fetching update information\t%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
-			printf "\n Installed:\t\t\t%s\n" "$APP_VERSION"
-			printf " Online:\t\t\t%s\n\n" "$APP_VERSION_LATEST"
-			if [[ $APP_VERSION_LATEST > $APP_VERSION ]]; then # found updates
-				printf " Found newer version\n"
-				# check if script was installed on expected location
-				if hash "$APP_PATH_FULL" 2>/dev/null; then # check for installed version of this script
-			        printf " Detected installed version of %s%s%s at %s%s%s\n\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+        if [[ "$APP_VERSION_LATEST" == "Not Found" ]]; then
+            printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
+            printError "2" "Unable to fetch version informations (${background}$APP_VERSION_URL${normal}) ... aborting"
+            pause
+            return
+        else # was able to fetch the version file online via curl
+            printf " Fetching update information\t%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
+            printf "\n Installed:\t\t\t%s\n" "$APP_VERSION"
+            printf " Online:\t\t\t%s\n\n" "$APP_VERSION_LATEST"
+            if [[ $APP_VERSION_LATEST > $APP_VERSION ]]; then # found updates
+                printf " Found newer version\n"
+                # check if script was installed on expected location
+                if hash "$APP_PATH_FULL" 2>/dev/null; then # check for installed version of this script
+                    printf " Detected installed version of %s%s%s at %s%s%s\n\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
 
-					# Ask if user wants to upgrade
-					read -p " ${green}Do you really want to update ${bold}$APP_NAME_SHORT${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
-				  	case $answer in
-						[yY])
-							# get latest version of v2
-							curl -o /tmp/interaptive.sh $APP_DOWNLOAD_URL
-							printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
-							# replace installed copy with new version
-							if [[ $IS_ROOT_USER == false ]]; then
-								sudo cp /tmp/interaptive.sh $APP_PATH_FULL
-							else
-								cp /tmp/interaptive.sh $APP_PATH_FULL
-							fi
-							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
-							
-							# get latest version of v1
-							curl -o /tmp/interaptive.sh $APP_CLASSIC_DOWNLOAD_URL
-							printf " Finished downloading latest classic version of %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}"
-							# replace installed copy with new version
-							if [[ $IS_ROOT_USER == false ]]; then
-								sudo cp /tmp/interaptive-classic.sh $APP_CLASSIC_PATH_FULL
-							else
-								cp /tmp/interaptive.sh $APP_CLASSIC_PATH_FULL
-							fi
-							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_CLASSIC_PATH_FULL" "${normal}"
-							
-							printf " You need to restart %s%s%s now to finish the update\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
-							printf "\n %sPress ANY key to quit %s%s%s" "${green}" "${bold}" "$APP_NAME_SHORT" "${normal}"
-							read -n 1
-							clear
-							printf " Bye\n\n"
-							exit
-							;;
-					esac
-			    else
-					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
-					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
-					printf " Visit %s%s%s to report issues.\n" "${bold}" "$APP_PROJECT_URL" "${normal}"
-			        exit 1
-			    fi
-			else # there are no updates available because:
-				if [[ $APP_VERSION_LATEST < $APP_VERSION ]]; then # user has dev build
-					printf " You are using a development version, nothing to do here.\n"
-				else # user is using latest official version
-					printf " You are already using the latest official version\n"
-				fi
-			fi
-		fi
+                    # Ask if user wants to upgrade
+                    read -p " ${green}Do you really want to update ${bold}$APP_NAME_SHORT${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
+                      case $answer in
+                        [yY])
+                            # get latest version of v2
+                            curl -o /tmp/interaptive.sh $APP_DOWNLOAD_URL
+                            printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
+                            # replace installed copy with new version
+                            if [[ $IS_ROOT_USER == false ]]; then
+                                sudo cp /tmp/interaptive.sh $APP_PATH_FULL
+                            else
+                                cp /tmp/interaptive.sh $APP_PATH_FULL
+                            fi
+                            printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+                            
+                            # get latest version of v1
+                            curl -o /tmp/interaptive.sh $APP_CLASSIC_DOWNLOAD_URL
+                            printf " Finished downloading latest classic version of %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}"
+                            # replace installed copy with new version
+                            if [[ $IS_ROOT_USER == false ]]; then
+                                sudo cp /tmp/interaptive-classic.sh $APP_CLASSIC_PATH_FULL
+                            else
+                                cp /tmp/interaptive.sh $APP_CLASSIC_PATH_FULL
+                            fi
+                            printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_CLASSIC_PATH_FULL" "${normal}"
+                            
+                            printf " You need to restart %s%s%s now to finish the update\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
+                            printf "\n %sPress ANY key to quit %s%s%s" "${green}" "${bold}" "$APP_NAME_SHORT" "${normal}"
+                            read -n 1
+                            clear
+                            printf " Bye\n\n"
+                            exit
+                            ;;
+                    esac
+                else
+                    printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+                    printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
+                    printf " Visit %s%s%s to report issues.\n" "${bold}" "$APP_PROJECT_URL" "${normal}"
+                    exit 1
+                fi
+            else # there are no updates available because:
+                if [[ $APP_VERSION_LATEST < $APP_VERSION ]]; then # user has dev build
+                    printf " You are using a development version, nothing to do here.\n"
+                else # user is using latest official version
+                    printf " You are already using the latest official version\n"
+                fi
+            fi
+        fi
     else # Curl is not installed -> can't check for updates
-		printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
-		printError "3" "Unable to find curl ... aborting"
+        printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
+        printError "3" "Unable to find curl ... aborting"
     fi
-	pause
+    pause
 }
 
 
@@ -180,34 +179,34 @@ showRandomDeveloperQuote()
 {
     # Random Notes array
     #
-	devQuote[0]="Prolific developers don't always write a lot of code, instead they solve a lot of problems. The two things are not the same."
-	devQuote[1]="Prolific programmers contribute to certain disaster."
-	devQuote[2]="Without requirements or design, programming is the art of adding bugs to an empty text file.\n\n\t${background}Louis Srygley${normal}"
-	devQuote[3]="Deleted code is debugged code."
-	devQuote[4]="There is no programming language–no matter how structured–that will prevent programmers from making bad programs."
-	devQuote[5]="The gap between theory and practice is not as wide in theory as it is in practice"
-	devQuote[6]="Good design adds value faster than it adds cost."
-	devQuote[7]="Errors should never pass silently. Unless explicitly silenced."
-	devQuote[8]="Reusing pieces of code is liked picking off sentences from other people's stories and trying to make a magazine article.\n\n\t${background}Bob Frankston${normal}"
-	devQuote[9]="Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.\n\n\t${background}Eagleson's law${normal}"
-	devQuote[10]="When debugging, novices insert corrective code; experts remove defective code.\n\n\t${background}Richard Pattis${normal}"
-	devQuote[11]="One of my most productive days was throwing away 1000 lines of code.\n\n\t${background}Ken Thompson${normal}" 
-	devQuote[12]="If the code and the comments disagree, then both are probably wrong.\n\n\t${background}Norm Schryer${normal}"
-	devQuote[13]="As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.\n\n\t${background}David Parnas${normal}"
-	devQuote[14]="The most important single aspect of software development is to be clear about what you are trying to build.\n\n\t${background}Bjarne Stroustrup${normal}"
-	devQuote[15]="Code formatting is about communication, and communication is the professional developer’s first order of business.\n\n\t${background}Robert C. Martin${normal}"
-	devQuote[16]="Programming is the art of doing one thing at a time.\n\n\t${background}Michael Feathers${normal}"
-	devQuote[17]="Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday's code.\n\n\t${background}Christopher Thompson${normal}"
-	devQuote[18]="In programming the hard part isn’t solving problems, but deciding what problems to solve.\n\n\t${background}Paul Graham${normal}"
-	devQuote[19]="A programmer is a device for turning caffeine into code.\n\n\t${background}Paul Erdos${normal}"
+    devQuote[0]="Prolific developers don't always write a lot of code, instead they solve a lot of problems. The two things are not the same."
+    devQuote[1]="Prolific programmers contribute to certain disaster."
+    devQuote[2]="Without requirements or design, programming is the art of adding bugs to an empty text file.\n\n\t${background}Louis Srygley${normal}"
+    devQuote[3]="Deleted code is debugged code."
+    devQuote[4]="There is no programming language–no matter how structured–that will prevent programmers from making bad programs."
+    devQuote[5]="The gap between theory and practice is not as wide in theory as it is in practice"
+    devQuote[6]="Good design adds value faster than it adds cost."
+    devQuote[7]="Errors should never pass silently. Unless explicitly silenced."
+    devQuote[8]="Reusing pieces of code is liked picking off sentences from other people's stories and trying to make a magazine article.\n\n\t${background}Bob Frankston${normal}"
+    devQuote[9]="Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.\n\n\t${background}Eagleson's law${normal}"
+    devQuote[10]="When debugging, novices insert corrective code; experts remove defective code.\n\n\t${background}Richard Pattis${normal}"
+    devQuote[11]="One of my most productive days was throwing away 1000 lines of code.\n\n\t${background}Ken Thompson${normal}" 
+    devQuote[12]="If the code and the comments disagree, then both are probably wrong.\n\n\t${background}Norm Schryer${normal}"
+    devQuote[13]="As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.\n\n\t${background}David Parnas${normal}"
+    devQuote[14]="The most important single aspect of software development is to be clear about what you are trying to build.\n\n\t${background}Bjarne Stroustrup${normal}"
+    devQuote[15]="Code formatting is about communication, and communication is the professional developer’s first order of business.\n\n\t${background}Robert C. Martin${normal}"
+    devQuote[16]="Programming is the art of doing one thing at a time.\n\n\t${background}Michael Feathers${normal}"
+    devQuote[17]="Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday's code.\n\n\t${background}Christopher Thompson${normal}"
+    devQuote[18]="In programming the hard part isn’t solving problems, but deciding what problems to solve.\n\n\t${background}Paul Graham${normal}"
+    devQuote[19]="A programmer is a device for turning caffeine into code.\n\n\t${background}Paul Erdos${normal}"
 
 
     # Select a random quote
-	rand=$((RANDOM %  ${#devQuote[@]}))
-	#rand=$((RANDOM % 8))
-	
-	# Display random quote
-	printf " ${devQuote[$rand]}\n\n"
+    rand=$((RANDOM %  ${#devQuote[@]}))
+    #rand=$((RANDOM % 8))
+    
+    # Display random quote
+    printf " ${devQuote[$rand]}\n\n"
 
     # exit application
     exit
@@ -226,27 +225,27 @@ checkRequirements()
     # whiptail - error
     #
     if hash whiptail 2>/dev/null; then # check for whiptail
-		:
-	else
-	    echo "whiptail is missing, aborting now"
-	    exit
+        :
+    else
+        echo "whiptail is missing, aborting now"
+        exit
     fi
     
     # apt - error
     #
     if hash apt 2>/dev/null; then # check for apt
-		:
-	else
-	    echo "apt is missing, aborting now"
-	    exit
+        :
+    else
+        echo "apt is missing, aborting now"
+        exit
     fi
     
     # curl - warning
     #
     if hash curl 2>/dev/null; then # check for apt
-		:
-	else
-	    echo "curl is missing, but needed for selfupdate."
+        :
+    else
+        echo "curl is missing, but needed for selfupdate."
 
     fi
 }
@@ -263,11 +262,11 @@ checkRequirements()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 pause()
 {
-	printf "\n %sPress ANY key to continue%s" "${green}" "${normal}"
-	read -n 1
-	
-	if [ -z $1 ]; then  
-	    displayMainMenu # jump back to CoreMenu (fallback)
+    printf "\n %sPress ANY key to continue%s" "${green}" "${normal}"
+    read -n 1
+    
+    if [ -z $1 ]; then  
+        displayMainMenu # jump back to CoreMenu (fallback)
     else 
         $1 # if supplised - jump to the menu in question
     fi
@@ -285,19 +284,19 @@ pause()
 checkForLinuxDistribution()
 {
     if hash lsb_release 2>/dev/null; then # check for lsb_release
-		curDistri=$(lsb_release -i)
+        curDistri=$(lsb_release -i)
 
         # Check if it is an unsupported linux version
-		if [[ $curDistri != *"Ubuntu"* ]] && [[ $curDistri != *"Debian"* ]] ; then
-		
-		    # check if apt exists
-		    if hash apt 2>/dev/null; then # check for apt
-		        whiptail --title "WARNING - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system. Feel free to use it anyways, but expect issues." 10 $DEFAULT_MENU_WIDTH
-	        else # unsupported distri and no apt -> exit
+        if [[ $curDistri != *"Ubuntu"* ]] && [[ $curDistri != *"Debian"* ]] ; then
+        
+            # check if apt exists
+            if hash apt 2>/dev/null; then # check for apt
+                whiptail --title "WARNING - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system. Feel free to use it anyways, but expect issues." 10 $DEFAULT_MENU_WIDTH
+            else # unsupported distri and no apt -> exit
                 whiptail --title "ERROR - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system without apt. Aborting now" 0 0
-		        exit
+                exit
             fi
-		fi
+        fi
     fi
 }
 
@@ -311,31 +310,31 @@ checkForLinuxDistribution()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 dpkgLog()
 {
-	printHead
-	printf " You are going to load the dpkg log (/var/log/dpkg).\n Select one of the following options:\n\n"
-	printf " [%sI%s]nstall\n [%sU%s]pgrade\n [%sR%s]emove\n [%sA%s]ll\t\t[default]\n\n" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}"
-	read -p " ${green}Please choose: ${normal}" answer
-	case $answer in
-		[iI]) # install
-			cat /var/log/dpkg.log | grep 'install '
-			;;
-		[uU]) #upgrade
-			cat /var/log/dpkg.log | grep 'upgrade '
-			;;
-		[rR]) #remove
-			cat /var/log/dpkg.log | grep 'remove '
-			;;
-		[aA]) # all
-			cat /var/log/dpkg.log | less
-			;;
-		"") # all
-			cat /var/log/dpkg.log | less
-			;;
-		*) # catch all other input as invalid
-			printf "\n Invalid input, aborting\n"
-			;;
-	esac
-	pause
+    printHead
+    printf " You are going to load the dpkg log (/var/log/dpkg).\n Select one of the following options:\n\n"
+    printf " [%sI%s]nstall\n [%sU%s]pgrade\n [%sR%s]emove\n [%sA%s]ll\t\t[default]\n\n" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}" "${green}" "${normal}"
+    read -p " ${green}Please choose: ${normal}" answer
+    case $answer in
+        [iI]) # install
+            cat /var/log/dpkg.log | grep 'install '
+            ;;
+        [uU]) #upgrade
+            cat /var/log/dpkg.log | grep 'upgrade '
+            ;;
+        [rR]) #remove
+            cat /var/log/dpkg.log | grep 'remove '
+            ;;
+        [aA]) # all
+            cat /var/log/dpkg.log | less
+            ;;
+        "") # all
+            cat /var/log/dpkg.log | less
+            ;;
+        *) # catch all other input as invalid
+            printf "\n Invalid input, aborting\n"
+            ;;
+    esac
+    pause
 }
 
 
@@ -691,59 +690,57 @@ displaySettingsMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function printHead() 
 {
-	errorCount=0			# Init errorCounter to 0
-	showASCIIArt=false		# Set a default value for boolean (assuming window is to small)
+    errorCount=0            # Init errorCounter to 0
+    showASCIIArt=false        # Set a default value for boolean (assuming window is to small)
 
-	# Height
-	minLines=30 			# Define min height (+5 for full ASCII-art)
-	curLines=$(tput lines)	# get lines of current terminal window
-	errorLinesHeight=""
+    # Height
+    minLines=20             # Define min height (+5 for full ASCII-art)
+    curLines=$(tput lines)    # get lines of current terminal window
+    errorLinesHeight=""
 
-	# Width
-	minColumns=74 			# Define mid width
-	curColumns=$(tput cols)	# get columns of current terminal window
-	errorColumnsWidth=""
+    # Width
+    minColumns=$DEFAULT_MENU_WIDTH             # Define min width
+    curColumns=$(tput cols)    # get columns of current terminal window
+    errorColumnsWidth=""
 
-	clear
+    clear   # clear the screen
 
-	if (( curLines < minLines )); then # not enough height
-		errorLinesHeight=" ${bold}${red}ERROR${normal}\tWindow height ($curLines) is to small (min $minLines)\n"
-		errorCount=$((errorCount+1)) # Errorcount +1
-	else # enough height available
-		if (( curLines > minLines+4 )); then # check if its enough height for ASCII-art as well
-			showASCIIArt=true # enable ASCII art
-		fi
-	fi
+    if (( curLines < minLines )); then # not enough height
+        errorLinesHeight=" ${bold}${red}ERROR${normal}\tWindow height ($curLines) is to small (min $minLines)\n"
+        errorCount=$((errorCount+1)) # Errorcount +1
+    else # enough height available
+        if (( curLines > minLines+4 )); then # check if its enough height for ASCII-art as well
+            showASCIIArt=true # enable ASCII art
+        fi
+    fi
 
-	# check columns (width)
-	if (( curColumns < minColumns )); then
-		errorColumnsWidth=" ${bold}${red}ERROR${normal}\tWindow width ($curColumns) is to small (min $minColumns)\n"
-		errorCount=$((errorCount+1)) # Errorcount +1
-	fi
+    # check columns (width)
+    if (( curColumns < minColumns )); then
+        errorColumnsWidth=" ${bold}${red}ERROR${normal}\tWindow width ($curColumns) is to small (min $minColumns)\n"
+        errorCount=$((errorCount+1)) # Errorcount +1
+    fi
 
-	# Show ASCII art only if we have enough space - otherwise skip
-	if [ "$showASCIIArt" = true ] ; then
-		printf "\n  _)        |               \    _ \ __ __| _)\n"
-		printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
-		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
-	fi
+    # Show ASCII art only if we have enough space - otherwise skip
+    if [ "$showASCIIArt" = true ] ; then
+        printf "\n  _)        |               \    _ \ __ __| _)\n"
+        printf "   |    \    _|   -_)   _| _ \   __/    |    | \ \ /  -_)\n"
+        printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
+    fi
 
-	#printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}S${normal}]elfupdate | [${green}Q${normal}]uit)"
+    #print a green line under the header
+    printf " %s" "${green}"
+    for (( c=1; c<=curColumns-2; c++ )); do
+        printf "-"
+    done
+    printf "%s\n\n" "${normal}"
 
-	#print a green line under the header
-	printf " %s" "${green}"
-	for (( c=1; c<=curColumns-2; c++ )); do
-		printf "-"
-	done
-	printf "%s\n\n" "${normal}"
-
-	# check if errors happened - if so pause the script
-	if (( errorCount > 0 )); then
-		printf "%s" "$errorLinesHeight"
-		printf "%s" "$errorColumnsWidth"
-		printf "\n Please resize your terminal window\n\n"
-		pause
-	fi
+    # check if errors happened - if so pause the script
+    if (( errorCount > 0 )); then
+        printf "%s" "$errorLinesHeight"
+        printf "%s" "$errorColumnsWidth"
+        printf "\n Please resize your terminal window\n\n"
+        pause
+    fi
 }
 
 
@@ -759,24 +756,26 @@ executeCommand()
     printHead
 
     if [[ $IS_ROOT_USER == false ]]; then # not a root user - check if command needs sudo permissions or not
-		# executing as non-root user - lets check if the commands needs sudo permissions or not
-		if [[ -z $3  ]]; then # sudo is NOT needed
-			printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
-			#$1
-			CMD="$2"
-		else # sudo is needed
-			printf " Executing command: %s%s %s%s\n\n" "${bold}" "$3" "$2" "${normal}"
-			#sudo $1
-			CMD="sudo $2"
-		fi
-	else # root user
-		printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
-		#$1
-		CMD="$2"
-	fi
+        # executing as non-root user - lets check if the commands needs sudo permissions or not
+        if [[ -z $3  ]]; then # sudo is NOT needed
+            printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
+            #$1
+            CMD="$2"
+        else # sudo is needed
+            printf " Executing command: %s%s %s%s\n\n" "${bold}" "$3" "$2" "${normal}"
+            CMD="sudo $2"
+        fi
+    else # root user
+        printf " Executing command: %s%s%s\n\n" "${bold}" "$2" "${normal}"
+        CMD="$2"
+    fi
+    
     $CMD # execute the command
-    pause "$1"
-	unset "$1"
+    
+    pause "$1"  # trigger pause and forward the name of the upcoming menu after pause
+    
+    # unset all variables
+    unset "$1"
     unset "$2"
     unset "$3"
 }
@@ -792,11 +791,11 @@ executeCommand()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function checkForRootUser() 
 {
-	if [ "$EUID" -ne 0 ]; then # current user != root
-		IS_ROOT_USER=false
-  	else # current user = root
-		IS_ROOT_USER=true
-	fi
+    if [ "$EUID" -ne 0 ]; then # current user != root
+        IS_ROOT_USER=false
+    else # current user = root
+        IS_ROOT_USER=true
+    fi
 }
 
 
@@ -809,16 +808,16 @@ function checkForRootUser()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function initTextAndColors() 
 {
-	# styles
-	normal=$(tput sgr0)				# default
-	bold=$(tput bold)				# bold
-	#underline=$(tput smul)			# underline
-	background='\033[0;100m'		# background
+    # styles
+    normal=$(tput sgr0)                # default
+    bold=$(tput bold)                # bold
+    #underline=$(tput smul)            # underline
+    background='\033[0;100m'        # background
 
-	# colors
-	red=$(tput setaf 1)
-	green=$(tput setaf 2)
-	yellow=$(tput setaf 3)
+    # colors
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    yellow=$(tput setaf 3)
 }
 
 
