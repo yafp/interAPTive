@@ -3,7 +3,9 @@
 
 2.0 - Whiptail it (20161216)
 ============================
-- Moved to whiptail for most UI cases
+- Moved UI to whiptail for most cases
+- Old 1.x version is now renamed to interaptive-classic
+- Disabled selfupdate in interaptive-classic (#33)
 
 
 
