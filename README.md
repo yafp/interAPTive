@@ -37,8 +37,6 @@ The following commands are supported
 - `apt clean`
 - `apt autoclean`
 - `apt autoremove`
-- `apt full-upgrade`
-- `apt dist-upgrade`
 - `apt edit-sources`
 
 ## Info commands
@@ -66,15 +64,15 @@ The following commands are supported
 - Extract the archive
 - Navigate to folder which contains this README.md
 
-Install by running:
+Install:
 > sudo make install
 
-Uninstall by running:
+Uninstall:
 > sudo make uninstall
 
 
 # Launching
-You can start interaptive by executing the `interaptive` command. An old version aka interaptive-classic can be started via the `interaptive-classic` command.
+You can start **interaptive** by executing the `interaptive` command. An old version aka interaptive-classic can be started via the `interaptive-classic` command.
 
 
 # Updating

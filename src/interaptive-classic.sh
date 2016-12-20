@@ -5,8 +5,8 @@
 #											(inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
-# Date				:20161216.01
-# Version			:1.0
+# Date				:20161220.01
+# Version			:1.0.1
 # Usage		 		:bash interaptive.sh 	(non-installed)
 #					:interaptive			(installed via Makefile)
 # Notes				:None
@@ -205,76 +205,7 @@ function printError() {
 }
 
 
-# ------------------------------------------------------
-# Function:	 	Check for updates and install them if user ask to
-# ------------------------------------------------------
-function selfUpdate() {
-	printHead
-	printf " Starting selfupdate...\n"
-	printf " Searching curl\t\t\t"
-	if hash curl 2>/dev/null; then # curl is installed - continue with selfupdate
-		printf "%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
 
-		curl -o /tmp/interaptive_version $appVersionURL # download version file to compare local vs online version
-		#appVersionLatest=`cat /tmp/interaptive_version`
-		appVersionLatest=$(cat /tmp/interaptive_version)
-
-		if [[ "$appVersionLatest" == "Not Found" ]]; then
-			printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
-			printError "2" "Unable to fetch version informations (${background}$appVersionURL${normal}) ... aborting"
-			pause
-			return
-		else # was able to fetch the version file online via curl
-			printf " Fetching update information\t%s%sPASSED%s\n" "${bold}" "${green}" "${normal}"
-			printf "\n Installed:\t\t\t%s\n" "$appVersion"
-			printf " Online:\t\t\t%s\n\n" "$appVersionLatest"
-			if [[ $appVersionLatest > $appVersion ]]; then # found updates
-				printf " Found newer version\n"
-				# check if script was installed on expected location
-				if hash "$appPathFull" 2>/dev/null; then # check for installed version of this script
-			        printf " Detected installed version of %s%s%s at %s%s%s\n\n" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-
-					# Ask if user wants to upgrade
-					read -p " ${green}Do you really want to update ${bold}$appName${normal}${green} to the latest version? [${normal}Y${green}]es or ANY other key to cancel: ${normal}" answer
-				  	case $answer in
-						[yY])
-							# get latest version
-							curl -o /tmp/interaptive.sh $appDownloadURL
-							printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$appName" "${normal}"
-							# replace installed copy with new version
-							if [[ $rootUser == false ]]; then
-								sudo cp /tmp/interaptive.sh $appPathFull
-							else
-								cp /tmp/interaptive.sh $appPathFull
-							fi
-							printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-							printf " You need to restart %s%s%s now to finish the update\n" "${bold}" "$appName" "${normal}"
-							printf "\n %sPress ANY key to quit %s%s%s" "${green}" "${bold}" "$appName" "${normal}"
-							read -n 1
-							clear
-							printf " Bye\n\n"
-							exit
-							;;
-					esac
-			    else
-					printf " %s%sERROR%s Unable to find installed version of %s%s%s at %s%s%s (errno 1).\n\n" "${bold}" "${red}" "${normal}" "${bold}" "$appName" "${normal}" "${bold}" "$appPathFull" "${normal}"
-					printf " Visit %s%s%s to report issues.\n" "${bold}" "$appURL" "${normal}"
-			        exit 1
-			    fi
-			else # there are no updates available because:
-				if [[ $appVersionLatest < $appVersion ]]; then # user has dev build
-					printf " You are using a development version, nothing to do here.\n"
-				else # user is using latest official version
-					printf " You are already using the latest official version\n"
-				fi
-			fi
-		fi
-    else # Curl is not installed -> can't check for updates
-		printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
-		printError "3" "Unable to find curl ... aborting"
-    fi
-	pause
-}
 
 
 # ------------------------------------------------------
@@ -364,7 +295,7 @@ function printHead {
 		printf "  _| _| _| \__| \___| _| _/  _\ _|     _|   _|  \_/ \___|\n\n"
 	fi
 
-	printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}S${normal}]elfupdate | [${green}Q${normal}]uit)"
+	printf "%s%s %s\n" "${bold}" "$appTagline" "   ${normal}([${green}I${normal}]nfo | [${green}Q${normal}]uit)"
 
 	#print a green line under the header
 	printf " %s" "${green}"
@@ -525,9 +456,6 @@ function printCoreUI {
 				;;
 			[iI]) # help / info
 				printAppInfo
-				;;
-			[sS]) # selfupdate
-				selfUpdate
 				;;
 	   		[qQ]) # quit
 				clear
