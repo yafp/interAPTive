@@ -35,8 +35,8 @@ The following commands are supported
 - `apt update`
 - `apt upgrade`
 - `apt clean`
-- `apt- autoclean`
-- `apt-autoremove`
+- `apt autoclean`
+- `apt autoremove`
 - `apt full-upgrade`
 - `apt dist-upgrade`
 - `apt edit-sources`
