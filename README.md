@@ -19,45 +19,46 @@
 
 
 # Requirements
-* apt
-* apt-get
-* apt-cache
+* `apt`
+* `apt-get`
+* `apt-cache`
+* `whiptail`
+* `curl`
 
-**interAPTive** is focused on **apt**.
-apt-get and apt-cache are only used where needed.
+**interAPTive** is focused on `apt`. `apt-get` and `apt-cache` are used where needed.
 
 
 # Implemented commands
 The following commands are supported
 
-## Update commands
-- apt update
-- apt upgrade
-- apt full-upgrade
-- apt dist-upgrade
+## Maintenance commands
+- `apt update`
+- `apt upgrade`
+- `apt clean`
+- `apt- autoclean`
+- `apt-autoremove`
+- `apt full-upgrade`
+- `apt dist-upgrade`
+- `apt edit-sources`
 
 ## Info commands
-- apt search
-- apt show
-- apt-cache policy
-- apt-get changelog
-- apt-cache depends
-- apt list --installed
-- apt list --upgradable
-- apt list --all-versions
+- `apt search`
+- `apt show`
+- `apt-cache policy`
+- `apt-get changelog`
+- `apt-cache depends`
+- `apt list --installed`
+- `apt list --upgradable`
+- `apt list --all-versions`
 
 ## Install commands
-- apt install
-- apt install --reinstall
+- `apt install`
+- `apt install --reinstall`
 
-## Removal commands
-- apt remove
-- apt purge
-- apt autoremove
-- apt-get clean
+## Uninstall commands
+- `apt remove`
+- `apt purge`
 
-## Misc
-- apt edit-sources
 
 
 # Installation
@@ -70,6 +71,10 @@ Install by running:
 
 Uninstall by running:
 > sudo make uninstall
+
+
+# Launching
+You can start interaptive by executing the `interaptive` command. An old version aka interaptive-classic can be started via the `interaptive-classic` command.
 
 
 # Updating
