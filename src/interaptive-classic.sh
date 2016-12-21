@@ -1,16 +1,13 @@
 #!/bin/bash
 
-# Title				:interaptive.sh
-# Description		:An interactive commandline interface for APT
-#											(inspired by yaourt-gui)
+# Title				:interaptive-classic.sh
+# Description		:An interactive commandline interface for APT (inspired by yaourt-gui)
 # Author			:yafp
 # URL				:https://github.com/yafp/interAPTive/
 # Date				:20161220.01
 # Version			:1.0.1
-# Usage		 		:bash interaptive.sh 	(non-installed)
-#					:interaptive			(installed via Makefile)
-# Notes				:None
-# Bash_version    	:4.3.14 				(tested with)
+# Usage		 		:bash interaptive-classic.sh 	(non-installed)
+#					:interaptive-classic			(installed via Makefile)
 
 
 # ------------------------------------------------------
@@ -33,13 +30,11 @@ function initAppBasics() {
 	readonly appAuthor="yafp"
 	readonly appName="interAPTive"
 	readonly appDescription="An interactive commandline interface for APT"
-	readonly appVersion="1.0.20161216.01" # 0.x.YYMMDDDD
+	readonly appVersion="1.0.1.20161221.01" # 0.x.YYMMDDDD
 	readonly appTagline=" $appName - $appDescription"
-	readonly appPathFull="/usr/bin/interaptive" # if 'installed' via makefile
 	readonly appLicense="GPL3"
 	readonly appURL="https://github.com/yafp/interAPTive/"
-	readonly appDownloadURL="https://raw.githubusercontent.com/yafp/interAPTive/master/src/interaptive.sh"
-	readonly appVersionURL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
+
 	#set -o nounset # Handling for undefined variables
 }
 
