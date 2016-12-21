@@ -244,6 +244,7 @@ function printAppInfo {
 	fi
 	printf " %sMan pages%s\n" "${bold}" "${normal}"
 	printf " ${background}apt${normal} ${background}apt-get${normal} ${background}apt-cache${normal}\n\n"
+	#printf " %sapt%s %sapt-get%s %sapt-cache%s\n\n" "${background}" "${normal}" "${background}" "${normal}" "${background}" "${normal}"
 	pause
 }
 
