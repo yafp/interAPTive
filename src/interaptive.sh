@@ -4,16 +4,13 @@
 # Description           :An interactive commandline interface for APT (inspired by yaourt-gui)
 # Author                :yafp
 # URL                   :https://github.com/yafp/interAPTive/
-# Date                  :20161219
-# Version               :2.0
+# Version               :2.x
 # Usage                 :bash interaptive.sh        (non-installed)
 #                       :interaptive                (installed via Makefile)
-# Notes                 :None
-# Bash_version          :4.3.14                     (tested with)
 # Requirements:
-# - whiptail
-# - curl
-# - apt
+#                       - whiptail
+#                       - curl
+#                       - apt
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +43,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # general stuff
-readonly APP_VERSION="2.0.20161219.01"
+readonly APP_VERSION="2.20161221.01"
 readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
 readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
 readonly APP_LICENSE="GPL3"
@@ -201,9 +198,8 @@ showRandomDeveloperQuote()
     devQuote[19]="A programmer is a device for turning caffeine into code.\n\n\t${background}Paul Erdos${normal}"
 
 
-    # Select a random quote
+    # Select a random quote from quote array
     rand=$((RANDOM %  ${#devQuote[@]}))
-    #rand=$((RANDOM % 8))
     
     # Display random quote
     printf " ${devQuote[$rand]}\n\n"
@@ -222,31 +218,35 @@ showRandomDeveloperQuote()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 checkRequirements()
 {
+    printf "${bold}Checking requirements:${normal}\n"
+    
     # whiptail - error
     #
+    printf "\twhiptail"
     if hash whiptail 2>/dev/null; then # check for whiptail
-        :
+        printf "\t${green}PASSED${normal}\n"
     else
-        echo "whiptail is missing, aborting now"
+        printf "\t${red}FAILED${normal}\n"
         exit
     fi
     
     # apt - error
     #
+    printf "\tapt"
     if hash apt 2>/dev/null; then # check for apt
-        :
+        printf "\t\t${green}PASSED${normal}\n"
     else
-        echo "apt is missing, aborting now"
+        printf "\t\t${red}FAILED${normal}\n"
         exit
     fi
     
     # curl - warning
     #
+    printf "\tcurl"
     if hash curl 2>/dev/null; then # check for apt
-        :
+        printf "\t\t${green}PASSED${normal}\n"
     else
-        echo "curl is missing, but needed for selfupdate."
-
+        printf "\t\t${yellow}FAILED${normal}\n"
     fi
 }
 
@@ -283,6 +283,7 @@ pause()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 checkForLinuxDistribution()
 {
+    printf "\n${bold}Checking linux distribution:${normal}\n"
     if hash lsb_release 2>/dev/null; then # check for lsb_release
         curDistri=$(lsb_release -i)
 
@@ -347,7 +348,7 @@ dpkgLog()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displayMainMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Exit" --menu "Main" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Exit (ESC)" --menu "Main" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
     "1" "Maintenance" \
     "2" "Information" \
     "3" "Install" \
@@ -389,7 +390,7 @@ displayMainMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displayMaintenanceMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Maintenance" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 7 \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Maintenance" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 7 \
     ".." "" \
     "Update package informations" "(sudo apt update)" \
     "Upgrade installed packages" "(sudo apt upgrade)" \
@@ -444,7 +445,7 @@ displayMaintenanceMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displayInfoMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 8 \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH 8 \
     ".." "" \
     "Show dpkg log" "(/var/log/dpkg)" \
     "Search package" "(apt search)" \
@@ -516,7 +517,7 @@ displayInfoMenu()
                 ;;
                 
             "Show package list")
-                OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+                OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
                 "<-- Back" "" \
                 "Installed" "(apt list --installed)" \
                 "Upgradeable" "(apt list --upgradeable)" \
@@ -561,7 +562,7 @@ displayInfoMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displayInstallMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Install" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Install" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
     ".." "" \
     "Install" "(sudo apt install)" \
     "Re-Install" "(sudo apt install --reinstall)"  3>&1 1>&2 2>&3)
@@ -608,7 +609,7 @@ displayInstallMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displayUninstallMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Uninstall" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Uninstall" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
     ".." ""  \
     "Remove package" "(sudo apt remove)"  \
     "Purge package" "(sudo apt purge)"  3>&1 1>&2 2>&3)
@@ -655,7 +656,7 @@ displayUninstallMenu()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 displaySettingsMenu()
 {
-    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back" --menu "Settings" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
+    OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Settings" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
     ".." "" \
     "Selfupdate" "" \
     "Github" "($APP_PROJECT_URL)" 3>&1 1>&2 2>&3)
@@ -830,9 +831,10 @@ function initTextAndColors()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 onStartup()
 {
+    printHead
+    initTextAndColors           # init color & forating variables
     checkRequirements           # check for required packages
     checkForLinuxDistribution   # check if linuc distri is supported or not
-    initTextAndColors           # init color & forating variables
     checkForRootUser            # check if current user is root or not
     displayMainMenu             # load the main menu
 }
