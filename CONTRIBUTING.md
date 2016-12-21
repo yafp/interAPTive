@@ -1,4 +1,4 @@
-![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive Contributing
+![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_32_0_000000_none.png) interAPTive Contributing
 ==========
 
 # Issues
