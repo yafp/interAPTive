@@ -1,11 +1,12 @@
-![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive Changelog
+![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_32_0_000000_none.png) interAPTive Changelog
 ==========
 
-2.0 - Whiptail it (20161216)
+2.x - Whiptail it (until now)
 ============================
 - Moved UI to whiptail for most cases
 - Old 1.x version is now renamed to interaptive-classic
 - Disabled selfupdate in interaptive-classic (#33)
+- Replaced apt-get and apt-cache commands with apt
 
 
 

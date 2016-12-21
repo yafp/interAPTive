@@ -14,21 +14,6 @@
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# URLs & other developer notes
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# Whiptail Examples:
-# http://xmodulo.com/create-dialog-boxes-interactive-shell-script.html
-#
-# Whiptail Color Usage
-# http://askubuntu.com/questions/776831/whiptail-change-background-color-dynamically-from-magenta
-#
-# Yes & OK      = 0
-# No & Cancel   = 1
-
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Developer/Debug Notes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -43,7 +28,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # general stuff
-readonly APP_VERSION="2.20161221.01"
+readonly APP_VERSION="2.20161221.02"
 readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
 readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
 readonly APP_LICENSE="GPL3"
@@ -96,7 +81,6 @@ selfUpdate()
 
         if [[ "$APP_VERSION_LATEST" == "Not Found" ]]; then
             printf " Fetching update information\t%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
-            printError "2" "Unable to fetch version informations (${background}$APP_VERSION_URL${normal}) ... aborting"
             pause
             return
         else # was able to fetch the version file online via curl
@@ -114,6 +98,7 @@ selfUpdate()
                       case $answer in
                         [yY])
                             # get latest version of v2
+                            #
                             curl -o /tmp/interaptive.sh $APP_DOWNLOAD_URL
                             printf " Finished downloading latest version of %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}"
                             # replace installed copy with new version
@@ -125,13 +110,14 @@ selfUpdate()
                             printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_NAME_SHORT" "${normal}" "${bold}" "$APP_PATH_FULL" "${normal}"
                             
                             # get latest version of v1
+                            #
                             curl -o /tmp/interaptive.sh $APP_CLASSIC_DOWNLOAD_URL
                             printf " Finished downloading latest classic version of %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}"
                             # replace installed copy with new version
                             if [[ $IS_ROOT_USER == false ]]; then
                                 sudo cp /tmp/interaptive-classic.sh $APP_CLASSIC_PATH_FULL
                             else
-                                cp /tmp/interaptive.sh $APP_CLASSIC_PATH_FULL
+                                cp /tmp/interaptive-classic.sh $APP_CLASSIC_PATH_FULL
                             fi
                             printf " Finished replacing %s%s%s at %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}" "${bold}" "$APP_CLASSIC_PATH_FULL" "${normal}"
                             
@@ -158,8 +144,7 @@ selfUpdate()
             fi
         fi
     else # Curl is not installed -> can't check for updates
-        printf "%s%sFAILED%S\n" "${bold}" "${red}" "${normal}"
-        printError "3" "Unable to find curl ... aborting"
+        printf "%s%sFAILED%s\n" "${bold}" "${red}" "${normal}"
     fi
     pause
 }
@@ -218,15 +203,15 @@ showRandomDeveloperQuote()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 checkRequirements()
 {
-    printf "${bold}Checking requirements:${normal}\n"
+    printf " %sChecking requirements:%s\n" "${bold}" "${normal}"
     
     # whiptail - error
     #
     printf "\twhiptail"
     if hash whiptail 2>/dev/null; then # check for whiptail
-        printf "\t${green}PASSED${normal}\n"
+        printf "\t%sPASSED%s\n" "${green}" "${normal}"
     else
-        printf "\t${red}FAILED${normal}\n"
+        printf "\t%sFAILED%s\n" "${red}" "${normal}"
         exit
     fi
     
@@ -234,9 +219,9 @@ checkRequirements()
     #
     printf "\tapt"
     if hash apt 2>/dev/null; then # check for apt
-        printf "\t\t${green}PASSED${normal}\n"
+        printf "\t\t%sPASSED%s\n" "${green}" "${normal}"
     else
-        printf "\t\t${red}FAILED${normal}\n"
+        printf "\t\t%sFAILED%s\n" "${red}" "${normal}"
         exit
     fi
     
@@ -244,9 +229,9 @@ checkRequirements()
     #
     printf "\tcurl"
     if hash curl 2>/dev/null; then # check for apt
-        printf "\t\t${green}PASSED${normal}\n"
+        printf "\t\t%sPASSED%s\n" "${green}" "${normal}"
     else
-        printf "\t\t${yellow}FAILED${normal}\n"
+        printf "\t\t%sFAILED%s\n" "${yellow}" "${normal}"
     fi
 }
 
@@ -258,17 +243,17 @@ checkRequirements()
 # Function:
 # - Pauses the script
 # - Forces the user to press a key
-# - loads the matching next menu
+# - loads the matching next menu if supplied
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 pause()
 {
     printf "\n %sPress ANY key to continue%s" "${green}" "${normal}"
     read -n 1
     
-    if [ -z $1 ]; then  
+    if [ -z "$1" ]; then  
         displayMainMenu # jump back to CoreMenu (fallback)
     else 
-        $1 # if supplised - jump to the menu in question
+        $1 # if supplied - jump to the menu in question
     fi
 }
 
@@ -283,7 +268,7 @@ pause()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 checkForLinuxDistribution()
 {
-    printf "\n${bold}Checking linux distribution:${normal}\n"
+    printf "\n %sChecking linux distribution:%s\n" "${bold}" "${normal}"
     if hash lsb_release 2>/dev/null; then # check for lsb_release
         curDistri=$(lsb_release -i)
 
@@ -292,11 +277,15 @@ checkForLinuxDistribution()
         
             # check if apt exists
             if hash apt 2>/dev/null; then # check for apt
+                printf "\t\t\t%sFAILED%s\n" "${yellow}" "${normal}"
                 whiptail --title "WARNING - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system. Feel free to use it anyways, but expect issues." 10 $DEFAULT_MENU_WIDTH
             else # unsupported distri and no apt -> exit
+                printf "\t\t\t%sFAILED%s\n" "${red}" "${normal}"
                 whiptail --title "ERROR - Unsupported Distribution" --backtitle "$APP_NAME_DESCRIPTION" --msgbox "You are using $APP_NAME_SHORT on an unsupported system without apt. Aborting now" 0 0
                 exit
             fi
+        else
+            printf "\t\t\t%sPASSED%s\n" "${green}" "${normal}"
         fi
     fi
 }
@@ -450,9 +439,9 @@ displayInfoMenu()
     "Show dpkg log" "(/var/log/dpkg)" \
     "Search package" "(apt search)" \
     "Show package information" "(apt show)" \
-    "Show package version information" "(apt-cache policy)" \
-    "Show package changelog" "(apt-get changelog)"  \
-    "Show package dependencies" "(apt-cache depends)"  \
+    "Show package version information" "(apt policy)" \
+    "Show package changelog" "(apt changelog)"  \
+    "Show package dependencies" "(apt depends)"  \
     "Show package list" "(apt list)"  3>&1 1>&2 2>&3)
      
     EXITSTATUS=$?
@@ -490,7 +479,7 @@ displayInfoMenu()
                 SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
                 EXITSTATUS=$?
                 if [ $EXITSTATUS = 0 ]; then
-                    executeCommand "displayInfoMenu" "apt-cache policy $SEARCH_STRING"
+                    executeCommand "displayInfoMenu" "apt policy $SEARCH_STRING"
                 else
                     displayInfoMenu
                 fi
@@ -500,7 +489,7 @@ displayInfoMenu()
                 SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
                 EXITSTATUS=$?
                 if [ $EXITSTATUS = 0 ]; then
-                    executeCommand "displayInfoMenu" "apt-get changelog $SEARCH_STRING"
+                    executeCommand "displayInfoMenu" "apt changelog $SEARCH_STRING"
                 else
                     displayInfoMenu
                 fi
@@ -510,7 +499,7 @@ displayInfoMenu()
                 SEARCH_STRING=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --inputbox "Please insert a package name" $DEFAULT_DIALOG_HEIGHT $DEFAULT_DIALOG_WIDTH 3>&1 1>&2 2>&3)
                 EXITSTATUS=$?
                 if [ $EXITSTATUS = 0 ]; then
-                    executeCommand "displayInfoMenu" "apt-cache depends $SEARCH_STRING"
+                    executeCommand "displayInfoMenu" "apt depends $SEARCH_STRING"
                 else
                     displayInfoMenu
                 fi
@@ -518,7 +507,7 @@ displayInfoMenu()
                 
             "Show package list")
                 OPTION=$(whiptail --title "$APP_NAME_SHORT" --backtitle "$APP_NAME_DESCRIPTION" --ok-button "Choose" --cancel-button "Back (ESC)" --menu "Info" $DEFAULT_MENU_HEIGHT $DEFAULT_MENU_WIDTH $DEFAULT_MENU_LIST_HEIGHT \
-                "<-- Back" "" \
+                ".." "" \
                 "Installed" "(apt list --installed)" \
                 "Upgradeable" "(apt list --upgradeable)" \
                 "All" "(apt list --all-versions)"  3>&1 1>&2 2>&3)
@@ -526,7 +515,7 @@ displayInfoMenu()
                 EXITSTATUS=$?
                 if [ $EXITSTATUS = 0 ]; then
                     case $OPTION in
-                        "<-- Back")
+                        "..")
                             displayInfoMenu
                             ;;
                             
@@ -792,11 +781,14 @@ executeCommand()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function checkForRootUser() 
 {
+    printf "\n %sChecking root or not:%s\n" "${bold}" "${normal}"
     if [ "$EUID" -ne 0 ]; then # current user != root
         IS_ROOT_USER=false
     else # current user = root
         IS_ROOT_USER=true
     fi
+    
+    printf "\t\t\t%sPASSED%s\n" "${green}" "${normal}"
 }
 
 
@@ -831,8 +823,8 @@ function initTextAndColors()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 onStartup()
 {
-    printHead
     initTextAndColors           # init color & forating variables
+    printHead                   # print cli head
     checkRequirements           # check for required packages
     checkForLinuxDistribution   # check if linuc distri is supported or not
     checkForRootUser            # check if current user is root or not

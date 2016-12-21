@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/license-GPL3-brightgreen.svg)](LICENSE)
 
 
-![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_64_0_000000_none.png) interAPTive
+![logo](https://raw.githubusercontent.com/yafp/interAPTive/master/img/fa-repeat_32_0_000000_none.png) interAPTive
 ==========
 
 # About
@@ -9,23 +9,19 @@
 
 
 # Userinterface (UI)
-## Version 2.0
+## Version 2 (interaptive.sh)
 * missing
 
-## Version 1.0
-![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/interaptive_in_action.gif)
+## Version 1 (interaptive-classic.sh)
+![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/interaptive_classic_in_action.gif)
 
-![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/current_ui.png)
+![UI](https://raw.githubusercontent.com/yafp/interAPTive/master/img/current_classic_ui.png)
 
 
 # Requirements
 * `apt`
-* `apt-get`
-* `apt-cache`
 * `whiptail`
 * `curl`
-
-**interAPTive** is focused on `apt`. `apt-get` and `apt-cache` are used where needed.
 
 
 # Implemented commands
@@ -42,9 +38,9 @@ The following commands are supported
 ## Info commands
 - `apt search`
 - `apt show`
-- `apt-cache policy`
-- `apt-get changelog`
-- `apt-cache depends`
+- `apt policy`
+- `apt changelog`
+- `apt depends`
 - `apt list --installed`
 - `apt list --upgradable`
 - `apt list --all-versions`
