@@ -28,7 +28,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # general stuff
-readonly APP_VERSION="2.20161221.02"
+readonly APP_VERSION="2.20161221.03"
 readonly APP_VERSION_URL="https://raw.githubusercontent.com/yafp/interAPTive/master/version"
 readonly APP_PROJECT_URL="https://github.com/yafp/interAPTive/"
 readonly APP_LICENSE="GPL3"
@@ -111,7 +111,7 @@ selfUpdate()
                             
                             # get latest version of v1
                             #
-                            curl -o /tmp/interaptive.sh $APP_CLASSIC_DOWNLOAD_URL
+                            curl -o /tmp/interaptive-classic.sh $APP_CLASSIC_DOWNLOAD_URL
                             printf " Finished downloading latest classic version of %s%s%s\n" "${bold}" "$APP_CLASSIC_NAME_SHORT" "${normal}"
                             # replace installed copy with new version
                             if [[ $IS_ROOT_USER == false ]]; then
